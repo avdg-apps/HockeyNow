@@ -9,10 +9,10 @@
     <item>
       <title>HockeyNow v2.1.0-alpha.3</title>
       <pubDate>Fri, 21 Aug 2026 04:11:00 +0000</pubDate>
-      <sparkle:version>15</sparkle:version>
+      <sparkle:version>16</sparkle:version>
       <sparkle:shortVersionString>2.1.0-alpha.3</sparkle:shortVersionString>
       <enclosure 
-        url="https://avdg-apps.github.io/HockeyNow/hockeynow%20v2.1.0-alpha.1.zip" 
+        url="https://avdg-apps.github.io/HockeyNow/hockeynow%20v2.1.0-alpha.3.zip" 
         length="5311021" 
         type="application/octet-stream" 
         sparkle:edSignature="VwaddTmuoDKkoiu2JulXeq6CvVfI3+QrghEPmAcOaYw=" />
