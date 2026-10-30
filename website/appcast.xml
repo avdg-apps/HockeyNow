@@ -1,21 +1,29 @@
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<?xml version="1.0" encoding="utf-8"?>
+
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
-    <title>HockeyNow Updates</title>
-    <link>https://avdg-apps.github.io/HockeyNow/appcast.xml</link>
-    <description>Most recent updates for HockeyNow.</description>
+    <title>HockeyNow</title>
+    <link>https://github.com/avdg-apps/HockeyNow</link>
+    <description>Most recent changes with links to updates.</description>
     <language>en</language>
 
     <item>
-      <title>HockeyNow v2.3.0</title>
-      <pubDate>Wed, 14 Oct 2026 07:29:00 +0000</pubDate>
-      <sparkle:version>21</sparkle:version>
-      <sparkle:shortVersionString>2.3.0</sparkle:shortVersionString>
+      <title>Version 2.3.1</title>
+      <pubDate>Fri, 30 Oct 2026 12:00:00 +0800</pubDate>
+      <sparkle:version>22</sparkle:version>
+      <sparkle:shortVersionString>2.3.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+        <h2>HockeyNow 2.3.1</h2>
+        <p>Bug fixes and improvements.</p>
+      ]]></description>
       <enclosure
-        url="https://avdg-apps.github.io/HockeyNow/hockeynow%20v2.3.0.dmg"
-        length="3220992"
-        type="application/octet-stream"
-        sparkle:edSignature="VwaddTmuoDKkoiu2JulXeq6CvVfI3+QrghEPmAcOaYw=" />
+        url="https://raw.githubusercontent.com/avdg-apps/HockeyNow/refs/heads/main/website/downloads/HockeyNow.dmg"
+        sparkle:edSignature="VwaddTmuoDKkoiu2JulXeq6CvVfI3+QrghEPmAcOaYw="
+        length="3458048"
+        type="application/octet-stream" />
     </item>
-
   </channel>
 </rss>
