@@ -1,68 +1,12 @@
-/* HockeyNow site — small, dependency-free.
- *
- * ┌─ EASY CONFIG ─────────────────────────────────────────────────────────────┐
- * │ DMG_URL   direct-download link for the installer (used by every button).  │
- * │ VERSION   shown on the site.                                              │
- * └───────────────────────────────────────────────────────────────────────────┘
- */
+
 const HN = {
-  VERSION: "2.3.0",
-  DMG_URL: "https://github.com/avdg-apps/HockeyNow/releases/latest/download/HockeyNow.dmg",
+  VERSION: "2.3.1",
+  DMG_URL: "downloads/HockeyNow.dmg",
   EMAIL: "avdgapps@gmail.com",
-  // Latest pre-release (alpha/beta). Change these two lines for each new pre-release.
-  PRE_VERSION: "2.3.0-alpha.1",
-  PRE_DMG_URL: "https://avdg-apps.github.io/HockeyNow/hockeynow%20v2.3.0-alpha.1.dmg",
 };
 
 document.querySelectorAll("[data-dmg]").forEach((a) => { a.href = HN.DMG_URL; a.setAttribute("download", ""); });
-document.querySelectorAll("[data-dmg-pre]").forEach((a) => { a.href = HN.PRE_DMG_URL; a.setAttribute("download", ""); });
-document.querySelectorAll("[data-version-pre]").forEach((el) => { el.textContent = HN.PRE_VERSION; });
 document.querySelectorAll("[data-version]").forEach((el) => { el.textContent = HN.VERSION; });
-
-/* Team logos.
- * The app loads its logos from ESPN's public logo CDN (a.espncdn.com/i/teamlogos/nhl/500/), so the
- * site does too. Every ".puck" (the coloured team circle) is upgraded to the real logo; if a logo
- * can't be loaded for any reason, the circle with the team code simply stays. Handles both ESPN
- * codes and the app's own codes (LA/LAK, NJ/NJD, SJ/SJS, TB/TBL, UTA/UTAH, WSH/WAS). */
-const LOGO_BASE = "https://a.espncdn.com/i/teamlogos/nhl/";
-const LOGO_SLUGS = {
-  ANA: ["ana"], BOS: ["bos"], BUF: ["buf"], CAR: ["car"], CBJ: ["cbj"], CGY: ["cgy"], CHI: ["chi"], COL: ["col"],
-  DAL: ["dal"], DET: ["det"], EDM: ["edm"], FLA: ["fla"], LA: ["la"], LAK: ["la"], MIN: ["min"], MTL: ["mtl"],
-  NJ: ["nj"], NJD: ["nj"], NSH: ["nsh"], NYI: ["nyi"], NYR: ["nyr"], OTT: ["ott"], PHI: ["phi"], PIT: ["pit"],
-  SEA: ["sea"], SJ: ["sj"], SJS: ["sj"], STL: ["stl"], TB: ["tb"], TBL: ["tb"], TOR: ["tor"],
-  UTA: ["utah", "uta"], UTAH: ["utah", "uta"], VAN: ["van"], VGK: ["vgk"], WPG: ["wpg"], WSH: ["wsh"], WAS: ["wsh"],
-};
-const logoCache = new Map();
-function resolveLogo(code) {
-  if (!logoCache.has(code)) {
-    const urls = [];
-    (LOGO_SLUGS[code] || [code.toLowerCase()]).forEach((s) => ["500-dark", "500"].forEach((v) => urls.push(`${LOGO_BASE}${v}/${s}.png`)));
-    logoCache.set(code, new Promise((resolve) => {
-      const next = () => {
-        const url = urls.shift();
-        if (!url) return resolve(null);
-        const probe = new Image();
-        probe.onload = () => resolve(url);
-        probe.onerror = next;
-        probe.src = url;
-      };
-      next();
-    }));
-  }
-  return logoCache.get(code);
-}
-document.querySelectorAll(".puck").forEach((puck) => {
-  const code = puck.textContent.trim().toUpperCase();
-  if (!/^[A-Z]{2,4}$/.test(code)) return;
-  resolveLogo(code).then((url) => {
-    if (!url) return;
-    const img = document.createElement("img");
-    img.src = url; img.alt = ""; img.decoding = "async"; img.draggable = false;
-    puck.classList.add("has-logo");
-    puck.setAttribute("aria-hidden", "true");
-    puck.appendChild(img);
-  });
-});
 
 /* mobile nav */
 const nav = document.querySelector(".nav");
@@ -129,26 +73,14 @@ if (links.length && io) {
 /* Drop-in demo videos.
  * Put an .mp4 in /media and it replaces the matching mockup automatically, e.g.
  *   <div class="media-slot" data-video="media/notch.mp4"> …mockup… </div>
- * If the file is missing, the mockup stays. Videos only play while on screen, and not at all
- * (controls shown instead) for visitors who prefer reduced motion. */
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const vio = "IntersectionObserver" in window
-  ? new IntersectionObserver((es) => es.forEach((e) => {
-      if (reduceMotion) return;
-      e.isIntersecting ? e.target.play().catch(() => {}) : e.target.pause();
-    }), { threshold: 0.25 })
-  : null;
+ * If the file is missing, the mockup stays. */
 document.querySelectorAll(".media-slot[data-video]").forEach((slot) => {
   const v = document.createElement("video");
-  v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = !reduceMotion; v.preload = "auto";
-  v.disablePictureInPicture = true;
-  if (reduceMotion) v.controls = true;
+  v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = "metadata";
   v.setAttribute("aria-label", slot.dataset.label || "HockeyNow demo");
   v.addEventListener("loadeddata", () => {
-    if (v.videoWidth && v.videoHeight) v.style.aspectRatio = `${v.videoWidth} / ${v.videoHeight}`;
     slot.replaceChildren(v);
-    if (!reduceMotion) v.play().catch(() => { v.controls = true; });
-    if (vio) vio.observe(v);
+    v.play().catch(() => { v.controls = true; });
   }, { once: true });
   v.src = slot.dataset.video;
 });
