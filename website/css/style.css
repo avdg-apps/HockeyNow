@@ -439,8 +439,6 @@ kbd { font-family: var(--font); font-size: 12px; background: rgba(255, 255, 255,
 @media (max-width: 700px) { .hero-desk { display: none; } .hero-mob { display: block; } .hero-stage { margin-top: 40px; } }
 .menubar { overflow: hidden; }
 
-/* Real team logos replace the coloured circle once they load (the circle stays as a fallback) */
-.puck.has-logo { background: transparent !important; box-shadow: none !important; color: transparent !important; font-size: 0 !important; position: relative; overflow: visible; }
-.puck.has-logo img { position: absolute; left: -8%; top: -8%; width: 116%; height: 116%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); pointer-events: none; }
-/* status pill, as in the app (FINAL, FINAL/OT) */
-.gmeta .pill { background: rgba(255, 255, 255, .1); color: #d8d8dd; padding: 2px 9px; border-radius: 6px; font-weight: 800; }
+.win { width: min(var(--w), 100%); }
+.win .win-sub { overflow-wrap: anywhere; }
+.fvis > div[style*="flex-wrap"] > *, .fvis > div[style*="grid"] > * { min-width: 0; max-width: 100%; }

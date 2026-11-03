@@ -1,6 +1,6 @@
 
 const HN = {
-  VERSION: "2.3.1",
+  VERSION: "2.3.2",
   DMG_URL: "downloads/HockeyNow.dmg",
   EMAIL: "avdgapps@gmail.com",
 };
@@ -70,10 +70,7 @@ if (links.length && io) {
   map.forEach((_, id) => { const el = document.getElementById(id); if (el) so.observe(el); });
 }
 
-/* Drop-in demo videos.
- * Put an .mp4 in /media and it replaces the matching mockup automatically, e.g.
- *   <div class="media-slot" data-video="media/notch.mp4"> …mockup… </div>
- * If the file is missing, the mockup stays. */
+
 document.querySelectorAll(".media-slot[data-video]").forEach((slot) => {
   const v = document.createElement("video");
   v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true; v.preload = "metadata";

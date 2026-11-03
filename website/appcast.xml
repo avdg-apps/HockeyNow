@@ -10,19 +10,28 @@
     <language>en</language>
 
     <item>
-      <title>Version 2.3.1</title>
-      <pubDate>Fri, 30 Oct 2026 12:00:00 +0800</pubDate>
-      <sparkle:version>22</sparkle:version>
-      <sparkle:shortVersionString>2.3.1</sparkle:shortVersionString>
+      <title>Version 2.3.2</title>
+      <pubDate>Tue, 03 Nov 2026 12:00:00 +0800</pubDate>
+      <sparkle:version>23</sparkle:version>
+      <sparkle:shortVersionString>2.3.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>15.6</sparkle:minimumSystemVersion>
       <description><![CDATA[
-        <h2>HockeyNow 2.3.1</h2>
-        <p>Bug fixes and improvements.</p>
+        <h2>What's new in HockeyNow 2.3.2</h2>
+        <ul>
+          <li><b>Picks &amp; Fantasy</b> tab: watch-party countdowns, pick'em with a running record, and pinned fantasy players.</li>
+          <li><b>Siri &amp; Shortcuts</b>: next game, score and standings.</li>
+          <li><b>Shot map and expected goals (xG)</b> for every game.</li>
+          <li><b>Per-team alert profiles</b>, plus trade and injury alerts.</li>
+          <li><b>Notch live pop-outs</b> on goals, penalties and period ends, and exact on-ice strength (e.g. 5 on 4).</li>
+          <li><b>Three stars</b>, play-by-play and a post-game tab.</li>
+          <li>Standings now use the official <b>NHL tiebreakers</b> (with ROW).</li>
+          <li>Settings, picks and alert profiles are backed up so they survive updates.</li>
+        </ul>
       ]]></description>
       <enclosure
         url="https://raw.githubusercontent.com/avdg-apps/HockeyNow/refs/heads/main/website/downloads/HockeyNow.dmg"
         sparkle:edSignature="VwaddTmuoDKkoiu2JulXeq6CvVfI3+QrghEPmAcOaYw="
-        length="3458048"
+        length="3795456"
         type="application/octet-stream" />
     </item>
   </channel>
