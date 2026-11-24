@@ -1,0 +1,70 @@
+name: Mirror Upstream Releases
+
+on:
+  workflow_dispatch: # Gives you the manual button to run it
+
+permissions:
+  contents: write    # Allows the script to create releases and upload files
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches full history so tags can map correctly
+
+      - name: Fetch and Mirror Upstream Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Fetch the latest release details from the parent repository via GitHub CLI
+          echo "Fetching release data from avdg-apps/HockeyNow..."
+          RELEASE_DATA=$(gh api repos/avdg-apps/HockeyNow/releases/latest)
+          
+          TAG_NAME=$(echo "$RELEASE_DATA" | jq -r '.tag_name')
+          RELEASE_TITLE=$(echo "$RELEASE_DATA" | jq -r '.name')
+          RELEASE_BODY=$(echo "$RELEASE_DATA" | jq -r '.body')
+          
+          echo "Found upstream release: $TAG_NAME ($RELEASE_TITLE)"
+          
+          # 2. Check if this release already exists in your fork to avoid duplicates
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists in your fork. Skipping."
+            exit 0
+          fi
+          
+          # 3. Pull the parent tags and push them to your fork
+          git remote add upstream https://github.com/avdg-apps/HockeyNow.git
+          git fetch --tags upstream
+          git push origin --tags || echo "Tags might already exist on remote"
+          
+          # 4. Create a temporary folder and download all the assets (.dmg, etc.)
+          mkdir -p assets_dir
+          echo "$RELEASE_DATA" | jq -r '.assets[].browser_download_url' | while read -r url; do
+            if [ "$url" != "null" ]; then
+              echo "Downloading asset: $url"
+              curl -L -H "Authorization: token $GH_TOKEN" -o "assets_dir/$(basename "$url")" "$url"
+            fi
+          done
+          
+          # 5. Handle empty release notes if any
+          if [ "$RELEASE_BODY" = "null" ] || [ -z "$RELEASE_BODY" ]; then
+            RELEASE_BODY="Mirrored release from upstream $TAG_NAME"
+          fi
+          
+          # 6. Create the corresponding release on your fork and upload assets safely
+          echo "Creating matching release $TAG_NAME on your fork..."
+          if compgen -G "assets_dir/*" > /dev/null; then
+            gh release create "$TAG_NAME" \
+              --title "$RELEASE_TITLE" \
+              --notes "$RELEASE_BODY" \
+              assets_dir/*
+          else
+            gh release create "$TAG_NAME" \
+              --title "$RELEASE_TITLE" \
+              --notes "$RELEASE_BODY"
+          fi
+          
+          echo "Successfully mirrored the release and all installer files!"
