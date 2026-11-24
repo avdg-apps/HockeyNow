@@ -1,6 +1,5 @@
 import Foundation
 
-// MARK: - One game of a series
 struct SeriesGame: Identifiable {
     let id: String
     let date: Date
@@ -12,7 +11,6 @@ struct SeriesGame: Identifiable {
     let wentToOvertime: Bool
 }
 
-// MARK: - One playoff series
 struct PlayoffSeries: Identifiable {
     struct Side {
         let abbreviation: String
@@ -22,11 +20,11 @@ struct PlayoffSeries: Identifiable {
     }
 
     let id: String
-    var top: Side            // the team that hosted game 1 (home ice)
+    var top: Side
     var bottom: Side
     var gamesPlayed = 0
     var games: [SeriesGame] = []
-    var round = 1            // 1 = first round ... 4 = Stanley Cup Final
+    var round = 1
     var startDate = Date.distantFuture
 
     var isComplete: Bool { top.wins >= 4 || bottom.wins >= 4 }
@@ -36,13 +34,11 @@ struct PlayoffSeries: Identifiable {
     func involves(_ abbreviation: String) -> Bool { top.abbreviation == abbreviation || bottom.abbreviation == abbreviation }
 }
 
-// MARK: - The bracket
-// Slots are laid out top to bottom exactly as they are drawn. A nil slot is a series that has not been decided yet (TBD).
 struct PlayoffBracket {
     struct ConferenceSide {
         var roundOne: [PlayoffSeries?] = Array(repeating: nil, count: 4)
         var roundTwo: [PlayoffSeries?] = Array(repeating: nil, count: 2)
-        var final: PlayoffSeries? = nil           // conference final
+        var final: PlayoffSeries? = nil
     }
     var eastern = ConferenceSide()
     var western = ConferenceSide()
@@ -51,7 +47,6 @@ struct PlayoffBracket {
 
     static let empty = PlayoffBracket()
 
-    // Builds the bracket from every game of one season. Only playoff games are used.
     static func build(from games: [ESPNEvent]) -> PlayoffBracket {
         let validTeams = Set(nhlDivisionOrder.flatMap(\.teams))
         var seriesByKey: [String: PlayoffSeries] = [:]
@@ -68,7 +63,6 @@ struct PlayoffBracket {
             guard let away = game.awayTeam, let home = game.homeTeam else { continue }
             let awayAbbr = away.team.threeLetterAbbreviation
             let homeAbbr = home.team.threeLetterAbbreviation
-            // Scheduled later rounds can list placeholder teams; skip them until the teams are known.
             guard validTeams.contains(awayAbbr), validTeams.contains(homeAbbr) else { continue }
             let key = [awayAbbr, homeAbbr].sorted().joined(separator: "-")
 
@@ -100,7 +94,6 @@ struct PlayoffBracket {
         guard !seriesByKey.isEmpty else { return bracket }
         bracket.hasStarted = true
 
-        // A team's first series is round 1, its second is round 2, and so on. Both teams in a series agree on the round.
         var seriesPerTeam: [String: [PlayoffSeries]] = [:]
         for series in seriesByKey.values {
             seriesPerTeam[series.top.abbreviation, default: []].append(series)
@@ -129,7 +122,6 @@ struct PlayoffBracket {
             side.final = mine.first { $0.round == 3 }
             if let final = side.final { used.insert(final.id) }
 
-            // Walks down the tree: each series is fed by the series its two teams won in the round before.
             func feeders(of parent: PlayoffSeries?, round: Int) -> [PlayoffSeries?] {
                 let pool = mine.filter { $0.round == round && !used.contains($0.id) }
                 var picked: [PlayoffSeries?] = []
@@ -152,7 +144,6 @@ struct PlayoffBracket {
             var roundOne: [PlayoffSeries?] = []
             for series in roundTwo { roundOne.append(contentsOf: feeders(of: series, round: 1)) }
 
-            // Anything not reachable from a decided later round is dropped into the first free slot of its column.
             func fill(_ slots: inout [PlayoffSeries?], round: Int) {
                 for series in mine where series.round == round && !used.contains(series.id) {
                     if let free = slots.firstIndex(where: { $0 == nil }) {
@@ -162,7 +153,6 @@ struct PlayoffBracket {
                 }
             }
             fill(&roundTwo, round: 2)
-            // Re-derive round one for any round-two series that was just placed.
             if roundOne.count == 4 {
                 for (index, series) in roundTwo.enumerated() {
                     guard let series, roundOne[index * 2] == nil, roundOne[index * 2 + 1] == nil else { continue }

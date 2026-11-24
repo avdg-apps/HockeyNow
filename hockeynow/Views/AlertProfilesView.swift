@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Per-team alert profiles (Settings)
 struct AlertProfilesView: View {
     @AppStorage("favorite_team_abbreviation") private var primary = ""
     @AppStorage("extra_favorite_teams") private var extras = ""
@@ -75,7 +74,6 @@ struct AlertProfilesView: View {
 }
 
 extension TeamAlertProfile {
-    // The stored value of one switch, regardless of whether the team is muted (muting only overrides it).
     func allowsIgnoringMute(_ kind: AlertKind) -> Bool {
         var copy = self
         copy.muted = false

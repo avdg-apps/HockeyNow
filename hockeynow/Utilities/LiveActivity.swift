@@ -1,8 +1,5 @@
 import Foundation
 
-// MARK: - Live-activity events for the notch
-// Posted by the fetcher when something happens in a followed team's game. The notch controller turns each one into a short
-// pop-out: it opens by itself, shows a banner for a few seconds, then closes again.
 struct LiveActivityEvent: Identifiable, Equatable {
     enum Kind: String { case goal, penalty, periodEnd, overtime, final }
     let id = UUID()
@@ -22,6 +19,5 @@ struct LiveActivityEvent: Identifiable, Equatable {
         }
     }
 
-    // The game page the notch banner and the notification open.
     var gameURL: URL? { URL(string: "https://www.espn.com/nhl/game/_/gameId/\(gameID)") }
 }

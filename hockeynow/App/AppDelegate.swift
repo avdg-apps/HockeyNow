@@ -2,14 +2,13 @@ import AppKit
 import SwiftUI
 import UserNotifications
 
-// MARK: - Auto Bridge
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var sharedFetcher: ESPNNHLFetcher?; private var barController: MenuBarController?; private var notchHUDController: NotchHUDWindowController?
     let updaterViewModel = UpdaterViewModel()
     let centralPopover = NSPopover()
-    
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
-    
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         SettingsBackup.restoreIfNeeded()
         SettingsBackup.startAutoBackup()
@@ -21,7 +20,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             NSApp.setActivationPolicy(.accessory)
         }
-        // The delegate must exist before anything is posted, or macOS hides banners while the app counts as frontmost.
         NotificationManager.shared.configure()
         let fetcher = ESPNNHLFetcher(); self.sharedFetcher = fetcher
         HockeyNowBridge.fetcher = fetcher
@@ -29,7 +27,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         centralPopover.contentViewController = NSHostingController(rootView: ContentView(fetcher: fetcher).environmentObject(updaterViewModel))
         self.barController = MenuBarController(fetcher: fetcher, popover: centralPopover)
         self.notchHUDController = NotchHUDWindowController(fetcher: fetcher)
-        
+
         NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main) { [weak self] note in
             guard let panel = note.object as? NSColorPanel, panel === NSColorPanel.shared,
                   let anchor = self?.barController?.statusItemScreenFrame,
@@ -40,7 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let y = anchor.minY - panelSize.height - 8
             panel.setFrameOrigin(NSPoint(x: x, y: max(y, screenFrame.minY + 12)))
         }
-        
+
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.modifierFlags.contains(.command) && event.charactersIgnoringModifiers?.lowercased() == "q" {
                 NSApplication.shared.terminate(nil)

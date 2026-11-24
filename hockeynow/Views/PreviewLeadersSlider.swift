@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - Pre-game "top performers" slider
-// to fix later
 struct PreviewLeadersSlider: View {
     let away: ESPNEvent.ESPNCompetitor
     let home: ESPNEvent.ESPNCompetitor
@@ -18,14 +16,13 @@ struct PreviewLeadersSlider: View {
         let unit: String
         let detail: String
         var numericValue: Double = 0
-        var highlight: Color? = nil      // set on the card with the better number in its category
+        var highlight: Color? = nil
     }
 
     private var cards: [LeaderCard] {
         let teams = [away, home]
         var result: [LeaderCard] = []
 
-        // Goals, then assists, then goalie wins; away and home side by side for each.
         for team in teams {
             let abbr = team.team.threeLetterAbbreviation
             if let player = fetcher.skaterLeaders
@@ -56,8 +53,6 @@ struct PreviewLeadersSlider: View {
                                          value: "\(goalie.wins)", unit: goalie.wins == 1 ? "WIN" : "WINS", detail: savePercentText(goalie.savePercentage) + " SV%", numericValue: Double(goalie.wins)))
             }
         }
-        // Tint the card with the better number in each category using that team's colour. The home team keeps its own
-        // colour; the visiting team switches to its away colour if the two colours look alike.
         let awayAbbr = away.team.threeLetterAbbreviation
         let homeAbbr = home.team.threeLetterAbbreviation
         for category in ["TOP SCORER", "ASSIST LEADER", "WIN LEADER"] {
@@ -79,7 +74,6 @@ struct PreviewLeadersSlider: View {
                 .font(.system(size: 10, weight: .black, design: .monospaced))
                 .foregroundColor(.secondary)
 
-            // Wait for the leaderboard to finish loading before showing anything, so the cards don't keep changing.
             if !fetcher.hasLoadedPlayerLeaders || fetcher.isLoadingPlayerStats || cards.isEmpty {
                 emptyState
             } else {

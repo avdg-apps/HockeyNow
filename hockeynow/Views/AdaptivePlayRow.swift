@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Row Layout
 struct AdaptivePlayRow: View {
     let play: ESPNPlay; let awayAbbr: String; let homeAbbr: String; let awayID: String; let homeID: String
     let fetcherManager: ESPNNHLFetcher
@@ -23,13 +22,13 @@ struct AdaptivePlayRow: View {
             if let seasonGoals { return "\(scorerInfo.name) (\(seasonGoals))" }
             return scorerInfo.name
         }()
-        
+
         return VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .center, spacing: 6) {
                 Text("P\(play.period.number) - \(play.clock.displayValue)")
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(.blue)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(formattedGoalDescription)
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
@@ -40,7 +39,6 @@ struct AdaptivePlayRow: View {
                 }
                 .lineLimit(2)
                 Spacer()
-                // Opens the ESPN game page, where the goal replays and highlights are.
                 if let gamecast = URL(string: "https://www.espn.com/nhl/game/_/gameId/\(gameID)") {
                     Link(destination: gamecast) {
                         Image(systemName: "play.rectangle").font(.system(size: 11)).foregroundColor(.secondary)
@@ -48,7 +46,7 @@ struct AdaptivePlayRow: View {
                     .help("Open this game on ESPN")
                 }
             }
-            
+
             HStack(spacing: 5) {
 
                 Text("\(scoringTeamAbbreviation) GOAL")
@@ -59,7 +57,7 @@ struct AdaptivePlayRow: View {
                     .background(getGameTeamColor(abbreviation: scoringTeamAbbreviation, isHome: scoringTeamAbbreviation == homeAbbr,
                                                  opponent: scoringTeamAbbreviation == homeAbbr ? awayAbbr : homeAbbr))
                     .cornerRadius(4)
-                
+
                 if !shotType.isEmpty {
                     Text(shotType.uppercased())
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
@@ -69,7 +67,7 @@ struct AdaptivePlayRow: View {
                         .background(Color.primary.opacity(0.35))
                         .cornerRadius(4)
                 }
-                
+
                 if !goalType.isEmpty {
                     Text(goalType)
                         .font(.system(size: 9, weight: .black, design: .monospaced))
@@ -83,9 +81,7 @@ struct AdaptivePlayRow: View {
         }
         .padding(.vertical, 4)
     }
-    
-    // ESPN writes scoring plays as "Connor McDavid (24) Wrist Shot, assisted by ...", where the bracketed number is the
-    // scorer's season goal count at that moment. Take the name before it, and the number itself.
+
     private func parseScorer(from source: String) -> (name: String, goals: Int?) {
         var cleaned = source.replacingOccurrences(of: "Goal scored by ", with: "", options: .caseInsensitive)
         cleaned = cleaned.replacingOccurrences(of: "Scored by ", with: "", options: .caseInsensitive)
@@ -94,7 +90,6 @@ struct AdaptivePlayRow: View {
             let digits = cleaned[range].filter(\.isNumber)
             if !name.isEmpty { return (name, Int(digits)) }
         }
-        // No bracketed number: fall back to everything before the first comma / shot description / assist.
         var name = cleaned
         for marker in [" assisted by ", " assists: ", " assist: ", ","] {
             if let r = name.range(of: marker, options: .caseInsensitive) { name = String(name[..<r.lowerBound]) }
@@ -105,7 +100,6 @@ struct AdaptivePlayRow: View {
         return (name.trimmingCharacters(in: .whitespacesAndNewlines), nil)
     }
 
-    // Fallback when the play text carries no number: the goal total from the loaded leaderboard.
     private func seasonGoalTotal(forScorer name: String) -> Int? {
         guard !name.isEmpty else { return nil }
         let abbr = scoringTeamAbbreviation
@@ -123,7 +117,7 @@ struct AdaptivePlayRow: View {
         if txt.contains(awayID.lowercased()) || txt.contains(awayAbbr.lowercased()) { return awayAbbr }
         return homeAbbr
     }
-    
+
     func detectShotType(from text: String) -> String {
         let lower = text.lowercased()
         if lower.contains("batted") || lower.contains("bat shot") { return "Bat Shot" }
@@ -139,7 +133,7 @@ struct AdaptivePlayRow: View {
         if lower.contains("penalty") { return "Penalty Shot" }
         return ""
     }
-    
+
     func detectGoalType(
         from text: String,
         typeText: String? = nil,
@@ -150,11 +144,11 @@ struct AdaptivePlayRow: View {
         let lower = [text, typeText ?? "", typeAbbreviation ?? "", strengthText ?? "", strengthAbbreviation ?? ""]
             .joined(separator: " ")
             .lowercased()
-        
+
         func anchoredMatch(_ pattern: String) -> Bool {
             lower.range(of: pattern, options: .regularExpression) != nil
         }
-        
+
         if anchoredMatch("\\(pp\\)") || anchoredMatch("\\bppg\\b") || anchoredMatch("\\bpp\\b") || lower.contains("power play") || lower.contains("power-play") {
             return "PPG"
         }
@@ -169,7 +163,7 @@ struct AdaptivePlayRow: View {
         }
         return ""
     }
-    
+
     private func parseGoalDetails(from source: String) -> (scorer: String, assists: String) {
         var cleaned = source.replacingOccurrences(of: "Goal scored by ", with: "", options: .caseInsensitive)
         cleaned = cleaned.replacingOccurrences(of: "Scored by ", with: "", options: .caseInsensitive)
@@ -209,21 +203,21 @@ struct AdaptivePlayRow: View {
     }
     func verifyGoalTypeFromJSON(teamID: String?, gameID: String) -> String {
         guard let teamID = teamID else { return "" }
-        
+
         if let cachedGameStats = fetcherManager.historicalTelemetryCache[gameID],
            let teamStatsArray = cachedGameStats[teamID] {
-            
+
             if let ppgStat = teamStatsArray.first(where: { $0.name == "powerPlayGoals" }),
                let count = Int(ppgStat.displayValue), count > 0 {
                 return "PPG"
             }
-            
+
             if let shgStat = teamStatsArray.first(where: { $0.name == "shortHandedGoals" }),
                let count = Int(shgStat.displayValue), count > 0 {
                 return "SHG"
             }
         }
-        
+
         return ""
     }
 }

@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Season Leaderboard Models (aggregated from every completed game's boxscore, so it can
-// reflect stat totals as of any chosen date, the same way ComputedStandingEntry does for W/L)
 struct SkaterSeasonLine: Identifiable {
     let id: String
     let displayName: String

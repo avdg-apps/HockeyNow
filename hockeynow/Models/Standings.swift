@@ -1,35 +1,24 @@
-//
-//  ComputedStandingEntry.swift
-//  hockeynow
-//
-//  Created by Declan Goh on 13/10/2026.
-//
-
 
 import Foundation
 
-// MARK: - Standings Model (computed from actual game results, so it can reflect any chosen date)
 struct ComputedStandingEntry: Identifiable {
     var id: String { teamAbbreviation }
     let teamAbbreviation: String
     let teamDisplayName: String
     let teamLogo: String?
-    var wins: Int = 0                // W: every win, however it came
-    var regulationWins: Int = 0      // RW: won inside 60 minutes
-    var overtimeWins: Int = 0        // won in overtime but not a shootout (ROW = RW + this)
+    var wins: Int = 0
+    var regulationWins: Int = 0
+    var overtimeWins: Int = 0
     var losses: Int = 0
     var otLosses: Int = 0
     var gamesPlayed: Int { wins + losses + otLosses }
-    var regulationOvertimeWins: Int { regulationWins + overtimeWins }     // ROW
-    // This team's games against each opponent, used for the head-to-head tiebreaker.
+    var regulationOvertimeWins: Int { regulationWins + overtimeWins }
     var meetings: [String: [HeadToHeadGame]] = [:]
     var points: Int { wins * 2 + otLosses }
     var goalsFor: Int = 0
     var goalsAgainst: Int = 0
     var goalDifferential: Int { goalsFor - goalsAgainst }
-    // "+12", "-3", "0"
     var goalDifferentialText: String { goalDifferential > 0 ? "+\(goalDifferential)" : "\(goalDifferential)" }
-    // Filled in from the games already loaded: the record over the last 10 games, and the current streak.
     var last10Wins: Int = 0
     var last10Losses: Int = 0
     var last10OTLosses: Int = 0
@@ -37,14 +26,12 @@ struct ComputedStandingEntry: Identifiable {
     var streakLength: Int = 0
 
     var last10Text: String { "\(last10Wins)-\(last10Losses)-\(last10OTLosses)" }
-    // "W3", "L2", "OT1"
     var streakText: String {
         guard let streakResult, streakLength > 0 else { return "—" }
         return "\(streakResult.shortLabel)\(streakLength)"
     }
 }
 
-// One game between two clubs, from the point of view of the team whose entry holds it.
 struct HeadToHeadGame {
     let date: Date
     let hostAbbreviation: String
@@ -52,7 +39,6 @@ struct HeadToHeadGame {
     let pointsAgainst: Int
 }
 
-// MARK: - A single game result from one team's point of view
 enum GameResult: String {
     case win, loss, otLoss
     var shortLabel: String {
@@ -64,7 +50,6 @@ enum GameResult: String {
     }
 }
 
-// W / L / OTL record split, used for home and away records.
 struct SplitRecord {
     var wins = 0
     var losses = 0
@@ -83,7 +68,6 @@ struct StandingGroup: Identifiable {
     var id: String { title }
     let title: String
     let entries: [ComputedStandingEntry]
-    // How many entries at the top of this group hold wild card spots (Wild Card view only).
     var wildCardSlots: Int = 0
 }
 
@@ -95,12 +79,6 @@ enum StandingsViewMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-// MARK: - NHL tiebreakers
-// Clubs level on points are separated by, in order:
-//   1. fewer games played   2. regulation wins (RW)   3. regulation + overtime wins (ROW)   4. total wins (W)
-//   5. points in games among the tied clubs (odd game removed)   6. goal differential   7. goals for
-// Steps 1-4 are plain numbers on each club; step 5 only matters for clubs still level after them, so ranking is done on
-// groups rather than with a pairwise comparator.
 func rankStandings(_ entries: [ComputedStandingEntry]) -> [ComputedStandingEntry] {
     let byPoints = entries.sorted { $0.points > $1.points }
     var result: [ComputedStandingEntry] = []
@@ -120,7 +98,6 @@ fileprivate func tiebreakKey(_ e: ComputedStandingEntry) -> [Int] {
 
 private func breakPointsTie(_ group: [ComputedStandingEntry]) -> [ComputedStandingEntry] {
     guard group.count > 1 else { return group }
-    // Steps 1-4.
     let ordered = group.sorted { lhs, rhs in
         let a = tiebreakKey(lhs), b = tiebreakKey(rhs)
         if a != b { return a.lexicographicallyPrecedes(b) == false }
@@ -134,7 +111,6 @@ private func breakPointsTie(_ group: [ComputedStandingEntry]) -> [ComputedStandi
         let level = Array(ordered[index..<end])
         if level.count == 1 { result.append(level[0]) }
         else {
-            // Steps 5-7 for clubs still level.
             let share = headToHeadShare(level)
             result.append(contentsOf: level.sorted { lhs, rhs in
                 let l = share[lhs.teamAbbreviation] ?? 0, r = share[rhs.teamAbbreviation] ?? 0
@@ -149,8 +125,6 @@ private func breakPointsTie(_ group: [ComputedStandingEntry]) -> [ComputedStandi
     return result
 }
 
-// Share of the available points each club earned in games among the tied clubs. When two clubs have met an uneven number
-// of times, the first game in the city with the extra game is left out.
 private func headToHeadShare(_ clubs: [ComputedStandingEntry]) -> [String: Double] {
     let names = Set(clubs.map(\.teamAbbreviation))
     var earned: [String: Int] = [:], available: [String: Int] = [:]
@@ -180,7 +154,6 @@ private func headToHeadShare(_ clubs: [ComputedStandingEntry]) -> [String: Doubl
     return share
 }
 
-// Rebuilds the division standings into the layout the user picked.
 func standingGroups(for mode: StandingsViewMode, from divisionGroups: [StandingGroup]) -> [StandingGroup] {
     let allEntries = divisionGroups.flatMap(\.entries)
 
@@ -199,7 +172,6 @@ func standingGroups(for mode: StandingsViewMode, from divisionGroups: [StandingG
         }
 
     case .wildCard:
-        // Each conference: the top 3 in every division, then everyone else ranked together for the two wild card spots.
         var result: [StandingGroup] = []
         for conference in ["Eastern", "Western"] {
             var wildCardPool: [ComputedStandingEntry] = []
@@ -225,7 +197,6 @@ let nhlDivisionOrder: [(conference: String, division: String, teams: [String])] 
     ("Western", "Pacific", ["ANA", "CGY", "EDM", "LAK", "SEA", "SJS", "VAN", "VGK"])
 ]
 
-// "1", "2", "T3": only clubs level on every tiebreaker share a rank, which is now very rare.
 func standingRankLabel(at index: Int, in entries: [ComputedStandingEntry]) -> String {
     guard entries.indices.contains(index) else { return "" }
     let entry = entries[index]

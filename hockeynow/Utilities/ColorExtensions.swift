@@ -1,7 +1,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Color Extensions
 extension Color {
     static let amber = Color(red: 1.0, green: 0.75, blue: 0.0)
     static let deepIce = Color(red: 0.1, green: 0.15, blue: 0.25)
@@ -19,7 +18,7 @@ extension Color {
         let b = Double(value & 0xFF) / 255
         self.init(red: r, green: g, blue: b)
     }
-    
+
     var hexString: String {
         let nsColor = NSColor(self)
         if let components = nsColor.usingColorSpace(.deviceRGB)

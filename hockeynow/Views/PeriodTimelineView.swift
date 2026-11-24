@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Live Period Tracking
 struct PeriodTimelineView: View {
     let periodNumber: Int
     let currentClockString: String
@@ -14,7 +13,7 @@ struct PeriodTimelineView: View {
     let currentPeriodLive: Int
     var compactMode: Bool = false
     let isPlayoff: Bool
-    
+
     private var timelineProgress: CGFloat {
         guard abstractGameState != "Preview" else { return 0.0 }
         if periodNumber < currentPeriodLive || abstractGameState == "Final" {
@@ -27,10 +26,10 @@ struct PeriodTimelineView: View {
         }
         return 0.0
     }
-    
+
     var body: some View {
         let isShootoutRow = !isPlayoff && periodNumber == 5
-        
+
         return HStack(spacing: 10) {
             Text({
                 if periodNumber <= 3 { return "P\(periodNumber)" }
@@ -41,21 +40,21 @@ struct PeriodTimelineView: View {
             .font(.system(size: compactMode ? 10 : 11, weight: .black, design: .monospaced))
             .foregroundColor(.primary.opacity(0.85))
             .frame(width: 24, alignment: .leading)
-            
+
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(Color.primary.opacity(0.15))
                         .frame(height: compactMode ? 4 : 6)
-                    
+
                     if !isShootoutRow {
                         Capsule()
                             .fill((abstractGameState == "Live" && periodNumber == currentPeriodLive) ? Color.amber : Color.blue)
                             .frame(width: geo.size.width * timelineProgress, height: compactMode ? 4 : 6)
                     }
-                    
+
                     let periodPlays = plays.filter { $0.period.number == periodNumber }
-                    
+
                     ForEach(Array(periodPlays.enumerated()), id: \.element.id) { index, play in
                         let goalPosition: CGFloat = {
                             if isShootoutRow {
@@ -69,7 +68,7 @@ struct PeriodTimelineView: View {
                                 return parseGoalCoordinates(displayValue: play.clock.displayValue, width: geo.size.width)
                             }
                         }()
-                        
+
                         Circle()
                             .fill(getScoringTeamColor(for: play))
                             .frame(width: compactMode ? 8 : 10, height: compactMode ? 8 : 10)
@@ -80,7 +79,7 @@ struct PeriodTimelineView: View {
                 .frame(maxHeight: .infinity, alignment: .center)
             }
             .frame(height: compactMode ? 8 : 12)
-            
+
             if isShootoutRow {
                 Text("—")
                     .font(.system(size: compactMode ? 9 : 11, weight: .bold, design: .monospaced))
@@ -99,7 +98,7 @@ struct PeriodTimelineView: View {
             }
         }
     }
-    
+
     private func parseGoalCoordinates(displayValue: String, width: CGFloat) -> CGFloat {
         let totalSeconds = 1200.0
         let components = displayValue.components(separatedBy: ":")
@@ -110,8 +109,7 @@ struct PeriodTimelineView: View {
         }
         return 0.0
     }
-    
-    // The home team keeps its own colour; the visiting team switches to its away colour when the two would look alike.
+
     private func getScoringTeamColor(for play: ESPNPlay) -> Color {
         let awayColor = getGameTeamColor(abbreviation: awayAbbr, isHome: false, opponent: homeAbbr)
         let homeColor = getGameTeamColor(abbreviation: homeAbbr, isHome: true, opponent: awayAbbr)

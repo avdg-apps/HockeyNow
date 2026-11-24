@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Panel
 struct LeagueStandingsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @ObservedObject var fetcher: ESPNNHLFetcher
@@ -11,11 +10,11 @@ struct LeagueStandingsView: View {
 
     private var mode: StandingsViewMode { StandingsViewMode(rawValue: storedMode) ?? .division }
     private var displayedGroups: [StandingGroup] { standingGroups(for: mode, from: fetcher.standingsGroups) }
-    
+
     private var standingsDateString: String {
         let formatter = DateFormatter(); formatter.dateStyle = .medium; return formatter.string(from: fetcher.standingsDate)
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -38,7 +37,6 @@ struct LeagueStandingsView: View {
                 }
                 .padding(.horizontal, 4)
 
-                // The view picker and the preseason switch live on their own row, apart from the date controls.
                 HStack(spacing: 12) {
                     Picker("", selection: $storedMode) {
                         ForEach(StandingsViewMode.allCases) { viewMode in
@@ -49,7 +47,7 @@ struct LeagueStandingsView: View {
                     PreseasonToggle(fetcher: fetcher)
                 }
                 .padding(.horizontal, 4)
-                
+
                 if fetcher.standingsGroups.isEmpty {
                     HStack {
                         Spacer()
@@ -65,7 +63,7 @@ struct LeagueStandingsView: View {
                                 .font(.system(size: 11, weight: .black, design: .monospaced))
                                 .foregroundColor(.blue)
                                 .padding(.horizontal, 4)
-                            
+
                             VStack(spacing: 0) {
                                 HStack(spacing: 3) {
                                     Text("#").frame(width: 26, alignment: .leading)
@@ -85,9 +83,9 @@ struct LeagueStandingsView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.vertical, 4)
                                 .padding(.horizontal, 8)
-                                
+
                                 Divider()
-                                
+
                                 ForEach(Array(group.entries.enumerated()), id: \.element.id) { index, entry in
                                     let isFavourite = !favouriteTeamAbbreviation.isEmpty && entry.teamAbbreviation == favouriteTeamAbbreviation
                                     let favouriteColor = getReadableFavouriteTeamColor(abbreviation: favouriteTeamAbbreviation, theme: AppTheme(rawValue: storedTheme) ?? .system, colorScheme: colorScheme)
@@ -115,7 +113,7 @@ struct LeagueStandingsView: View {
                                             }
                                         }
                                         .frame(width: 122, alignment: .leading)
-                                        
+
                                         Spacer()
                                         Text("\(entry.gamesPlayed)").frame(width: 30, alignment: .center)
                                         Text("\(entry.wins)").frame(width: 30, alignment: .center)
@@ -144,7 +142,6 @@ struct LeagueStandingsView: View {
                                         if isFavourite { Rectangle().fill(favouriteColor).frame(width: 3) }
                                     }
 
-                                    // Playoff-line style cut-off under the second wild card.
                                     if group.wildCardSlots > 0 && index == group.wildCardSlots - 1 && index < group.entries.count - 1 {
                                         Rectangle().fill(Color.amber.opacity(0.7)).frame(height: 1.5)
                                     }
@@ -159,8 +156,7 @@ struct LeagueStandingsView: View {
             .padding(14)
         }
     }
-    
-    // Small coloured chip: green for a winning streak, red for losses, orange for overtime losses.
+
     @ViewBuilder
     private func streakChip(for entry: ComputedStandingEntry) -> some View {
         if let result = entry.streakResult, entry.streakLength > 0 {

@@ -1,9 +1,6 @@
 import Foundation
 import UserNotifications
 
-// MARK: - Trade, signing and injury alerts for followed teams
-// Polls ESPN's league transactions and injury lists about every 20 minutes. The first pass only records what already
-// exists, so nothing old is announced. All JSON is read loosely because these feeds are unofficial.
 @MainActor
 final class TransactionWatcher {
     static let shared = TransactionWatcher()
@@ -28,7 +25,6 @@ final class TransactionWatcher {
         if !injuryTeams.isEmpty { await checkInjuries(teams: injuryTeams) }
     }
 
-    // MARK: Transactions
     private func checkTransactions(teams: Set<String>) async {
         guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/transactions"),
               let (data, _) = try? await URLSession.shared.data(from: url),
@@ -54,7 +50,6 @@ final class TransactionWatcher {
         }
     }
 
-    // MARK: Injuries
     private func checkInjuries(teams: Set<String>) async {
         guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/injuries"),
               let (data, _) = try? await URLSession.shared.data(from: url),
@@ -72,7 +67,7 @@ final class TransactionWatcher {
         guard !snapshot.isEmpty else { return }
         let previous = UserDefaults.standard.dictionary(forKey: injuryKey) as? [String: String]
         UserDefaults.standard.set(snapshot, forKey: injuryKey)
-        guard let previous else { return }       // first pass: just remember the list
+        guard let previous else { return }
         var sent = 0
         for (key, status) in snapshot where previous[key] != status {
             let parts = key.split(separator: "|", maxSplits: 1).map(String.init)

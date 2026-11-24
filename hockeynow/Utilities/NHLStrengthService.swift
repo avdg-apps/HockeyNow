@@ -1,15 +1,11 @@
 import Foundation
 
-// MARK: - NHL on-ice strength
-// ESPN only says *which* team is on a power play. The NHL's public play-by-play carries the exact skater and goalie
-// counts for every event, so this looks the game up there (matched by date + team abbreviations) and reads the
-// newest event. All JSON is read loosely, because the feed is unofficial and its shape can drift.
 nonisolated struct ThreeStar: Identifiable, Equatable {
-    let id: Int            // 1, 2 or 3
+    let id: Int
     let name: String
     let team: String
     let position: String
-    let line: String       // "2G 1A" or ".945 SV%"
+    let line: String
     var headshot: String? = nil
 }
 
@@ -22,7 +18,7 @@ nonisolated struct NextGameInfo: Equatable {
 actor NHLStrengthService {
     static let shared = NHLStrengthService()
 
-    private var nhlIDs: [String: Int] = [:]          // ESPN event id -> NHL game id
+    private var nhlIDs: [String: Int] = [:]
     private var lastFetch: [String: Date] = [:]
     private var lastResult: [String: GameStrength] = [:]
     private let minimumInterval: TimeInterval = 6
@@ -30,7 +26,6 @@ actor NHLStrengthService {
     private var starsAttempt: [String: Date] = [:]
     private var nextCache: [String: (fetched: Date, info: NextGameInfo?)] = [:]
 
-    // ESPN and the NHL disagree on a few abbreviations.
     static func canonical(_ abbreviation: String) -> String {
         let upper = abbreviation.uppercased()
         let aliases = ["UTAH": "UTA", "TB": "TBL", "NJ": "NJD", "SJ": "SJS", "LA": "LAK", "MON": "MTL"]
@@ -50,7 +45,6 @@ actor NHLStrengthService {
               (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? false,
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let plays = root["plays"] as? [[String: Any]] else { return lastResult[espnGameID] }
-        // Newest event that carries a situation code.
         for play in plays.reversed() {
             let raw = play["situationCode"]
             let code = (raw as? String) ?? (raw as? Int).map { String(format: "%04d", $0) }
@@ -62,7 +56,6 @@ actor NHLStrengthService {
         return lastResult[espnGameID]
     }
 
-    // MARK: Three stars (published by the NHL once a game is over)
     func threeStars(espnGameID: String, awayAbbr: String, homeAbbr: String, start: Date?) async -> [ThreeStar] {
         if let cached = starsCache[espnGameID], !cached.isEmpty { return cached }
         if let last = starsAttempt[espnGameID], Date().timeIntervalSince(last) < 30 { return [] }
@@ -101,7 +94,6 @@ actor NHLStrengthService {
         return stars
     }
 
-    // MARK: Shot locations and expected goals (from the NHL play-by-play)
     private var shotCache: [String: (fetched: Date, data: ShotMapData)] = [:]
 
     func shotMap(espnGameID: String, awayAbbr: String, homeAbbr: String, start: Date?) async -> ShotMapData? {
@@ -130,7 +122,6 @@ actor NHLStrengthService {
                   let owner = details["eventOwnerTeamId"] as? Int else { continue }
             let isHome = owner == homeID
             if !isHome && owner != awayID { continue }
-            // Rinks swap ends between periods; turn every shot so the shooting team always attacks the goal on the right.
             let homeDefendsLeft = ((play["homeTeamDefendingSide"] as? String) ?? "") != "right"
             let attacksRight = (isHome == homeDefendsLeft)
             let x = attacksRight ? rawX : -rawX, y = attacksRight ? rawY : -rawY
@@ -146,7 +137,6 @@ actor NHLStrengthService {
         return result
     }
 
-    // MARK: Next game for a team
     func nextGame(for team: String) async -> NextGameInfo? {
         let abbr = Self.canonical(team)
         if let cached = nextCache[abbr], Date().timeIntervalSince(cached.fetched) < 900,
@@ -175,7 +165,6 @@ actor NHLStrengthService {
 
     func resolveID(espnGameID: String, awayAbbr: String, homeAbbr: String, start: Date?) async -> Int? {
         if let cached = nhlIDs[espnGameID] { return cached }
-        // The NHL files a game under its US Eastern calendar date.
         var eastern = Calendar(identifier: .gregorian)
         eastern.timeZone = TimeZone(identifier: "America/New_York") ?? .current
         let formatter = DateFormatter()
@@ -198,7 +187,6 @@ actor NHLStrengthService {
         return nil
     }
 
-    // Walks the JSON for a game object whose team abbreviations match; works for both /score and /schedule layouts.
     private static func findGame(in node: Any, away: String, home: String) -> Int? {
         if let dict = node as? [String: Any] {
             if let id = dict["id"] as? Int,
@@ -213,11 +201,10 @@ actor NHLStrengthService {
     }
 }
 
-// MARK: - Shot map models
 nonisolated struct ShotEvent: Identifiable, Equatable {
     enum Kind { case goal, shot, miss }
     let id: Int
-    let x: Double              // feet from centre ice, shooting team attacking the goal at +89
+    let x: Double
     let y: Double
     let isHome: Bool
     let kind: Kind
@@ -226,7 +213,6 @@ nonisolated struct ShotEvent: Identifiable, Equatable {
     let period: Int
     let clock: String
 
-    // A deliberately simple model: chance falls with distance from the net and with a sharper angle. Misses count a little less.
     static func expectedGoal(distance: Double, angle: Double, isMiss: Bool) -> Double {
         let p = 1 / (1 + exp(1.0 + 0.06 * distance + 0.012 * angle))
         return isMiss ? p * 0.7 : p

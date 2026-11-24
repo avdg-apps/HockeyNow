@@ -1,8 +1,5 @@
 import SwiftUI
 
-// MARK: - Pre-game insights
-// Under each preview: each team's last five results as dots, its home and away record, the recent head-to-head,
-// and the goalies most likely to start. Everything is worked out from games the app has already loaded.
 struct PreviewInsightsView: View {
     let game: ESPNEvent
     @ObservedObject var fetcher: ESPNNHLFetcher
@@ -17,7 +14,6 @@ struct PreviewInsightsView: View {
             let preseason = game.isPreseasonGame
             let awayForm = fetcher.teamForm(for: awayAbbr, before: gameDate, preseason: preseason)
             let homeForm = fetcher.teamForm(for: homeAbbr, before: gameDate, preseason: preseason)
-            // Written from the favourite team's side when it is playing, otherwise from the home team's.
             let perspective = awayAbbr == favouriteTeamAbbreviation ? awayAbbr : homeAbbr
             let opponent = perspective == awayAbbr ? homeAbbr : awayAbbr
 
@@ -46,7 +42,6 @@ struct PreviewInsightsView: View {
 
                 GameLinesView(game: game, fetcher: fetcher)
             }
-            // Fetches (or reads from disk) the boxscores needed to see who started each team's recent games.
             .task(id: game.id) {
                 let ids = fetcher.starterGameIDs(for: awayAbbr, before: gameDate, preseason: preseason)
                     + fetcher.starterGameIDs(for: homeAbbr, before: gameDate, preseason: preseason)

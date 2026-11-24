@@ -1,6 +1,5 @@
 import Foundation
 
-// MARK: - ESPN Scoreboard API Decoders
 struct ESPNResponse: Decodable { let events: [ESPNEvent]? }
 
 struct ESPNEvent: Decodable, Identifiable, Equatable {
@@ -11,11 +10,11 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
     var competitions: [ESPNCompetition]
     let links: [ESPNLink]?
     let season: ESPNSeason?
-    
+
     static func == (lhs: ESPNEvent, rhs: ESPNEvent) -> Bool {
         return lhs.id == rhs.id && lhs.status.displayClock == rhs.status.displayClock && lhs.awayTeam?.score == rhs.awayTeam?.score && lhs.homeTeam?.score == rhs.homeTeam?.score && lhs.awayTeam?.shotsOnGoal == rhs.awayTeam?.shotsOnGoal && lhs.homeTeam?.shotsOnGoal == rhs.homeTeam?.shotsOnGoal
     }
-    
+
     struct ESPNStatus: Decodable {
         let clock: Double?
         let displayClock: String?
@@ -46,7 +45,7 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
     }
     struct ESPNLink: Decodable { let href: String }
     struct ESPNSeason: Decodable { let type: Int? }
-    
+
     struct ESPNCompetitor: Decodable, Identifiable {
         var id: String { team.id }
         let homeAway: String
@@ -54,13 +53,13 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
         let team: ESPNTeam
         let linescores: [ESPNLinescore]?
         var statistics: [ESPNStatistic]?
-        
+
         struct ESPNTeam: Decodable {
             let id: String
             let abbreviation: String
             let displayName: String?
             let logo: String?
-            
+
             var threeLetterAbbreviation: String {
                 let upper = abbreviation.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
                 switch upper {
@@ -71,7 +70,7 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
                 default: return upper
                 }
             }
-            
+
             var safeDisplayName: String {
                 if let name = displayName, !name.isEmpty { return name }
                 switch threeLetterAbbreviation {
@@ -118,16 +117,15 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
         struct ESPNStatistic: Codable {
             let name: String
             let displayValue: String
-            
+
             enum CodingKeys: String, CodingKey { case name, displayValue, abbreviation, value }
-            
-            // Written back out in the simple form (name + displayValue) so saved games reload identically.
+
             func encode(to encoder: Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
                 try container.encode(name, forKey: .name)
                 try container.encode(displayValue, forKey: .displayValue)
             }
-            
+
             init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 func firstAvailableString(_ keys: CodingKeys...) -> String {
@@ -142,13 +140,13 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
                 displayValue = firstAvailableString(.displayValue, .value)
             }
         }
-        
+
         var shotsOnGoal: String {
             let shotKeys: Set<String> = ["shotstotal", "shots", "totalshots", "shotsongoal"]
             return statistics?.first(where: { shotKeys.contains($0.name.lowercased()) })?.displayValue ?? "0"
         }
     }
-    
+
     var awayTeam: ESPNCompetitor? { competitions.first?.competitors.first(where: { $0.homeAway == "away" }) }
     var homeTeam: ESPNCompetitor? { competitions.first?.competitors.first(where: { $0.homeAway == "home" }) }
     var venueDisplayText: String? {
@@ -161,17 +159,15 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
         case (nil, true): return nil
         }
     }
-    
+
     var powerPlayTeamID: String? {
         return competitions.first?.situation?.teamOnPowerPlay?.id
     }
-    
+
     var isPlayoffGame: Bool {
         return season?.type == 3
     }
 
-    // ESPN season types: 1 = preseason, 2 = regular season, 3 = playoffs.
-    // If a response ever omits the type, September games are treated as preseason.
     private var isSeptemberGame: Bool {
         guard let date = systemCalendarDate else { return false }
         return Calendar(identifier: .gregorian).component(.month, from: date) == 9
@@ -186,7 +182,7 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
         if let type = season?.type { return type == 2 }
         return !isSeptemberGame
     }
-    
+
     var abstractState: String {
         switch status.type.state {
         case "in": return "Live"
@@ -194,7 +190,7 @@ struct ESPNEvent: Decodable, Identifiable, Equatable {
         default: return "Preview"
         }
     }
-    
+
     var systemCalendarDate: Date? {
         HockeyNowFormatterCache.formatter(format: "yyyy-MM-dd'T'HH:mm'Z'", zone: TimeZone(secondsFromGMT: 0)!).date(from: date)
     }
@@ -207,9 +203,7 @@ struct ESPNGameSummary: Decodable {
     let boxscore: ESPNBoxscore?
     let winProbability: [ESPNWinProbability]?
     let predictor: ESPNPredictor?
-    
-    // ESPN spells the key "winprobability"; both spellings are accepted. Each section is decoded on its own so one
-    // oddly shaped section can no longer throw away the whole game summary.
+
     enum CodingKeys: String, CodingKey { case scoringPlays, plays, penalties, boxscore, winprobability, winProbability, predictor }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -222,8 +216,7 @@ struct ESPNGameSummary: Decodable {
         winProbability = lower ?? camel
         predictor = (try? c.decodeIfPresent(ESPNPredictor.self, forKey: .predictor)) ?? nil
     }
-    
-    // Pre-game "Matchup Predictor": each team's projected chance of winning, as text ("58.2") or a number.
+
     struct ESPNPredictor: Decodable {
         let homeTeam: ESPNPredictorTeam?
         let awayTeam: ESPNPredictorTeam?
@@ -243,7 +236,7 @@ struct ESPNGameSummary: Decodable {
             return nil
         }
     }
-    
+
     struct ESPNBoxscore: Codable {
         let teams: [ESPNBoxscoreTeam]?
         let players: [ESPNBoxscorePlayerGroup]?
@@ -252,7 +245,7 @@ struct ESPNGameSummary: Decodable {
             let statistics: [ESPNEvent.ESPNCompetitor.ESPNStatistic]?
             struct ESPNBoxscoreTeamDetail: Codable {
                 let id: String?
-                
+
                 enum CodingKeys: String, CodingKey { case id }
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -266,8 +259,7 @@ struct ESPNGameSummary: Decodable {
                 }
             }
         }
-        
-        // ESPN returns one stat row per athlete.
+
         struct ESPNBoxscorePlayerGroup: Codable {
             let team: ESPNBoxscoreTeam.ESPNBoxscoreTeamDetail?
             let statistics: [ESPNPlayerStatCategory]?
@@ -288,7 +280,7 @@ struct ESPNGameSummary: Decodable {
             let shortName: String?
             let headshot: ESPNAthleteHeadshot?
             let position: ESPNAthletePosition?
-            
+
             enum CodingKeys: String, CodingKey { case id, displayName, shortName, headshot, position }
             init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -308,7 +300,7 @@ struct ESPNGameSummary: Decodable {
         struct ESPNAthleteHeadshot: Codable { let href: String? }
         struct ESPNAthletePosition: Codable { let abbreviation: String? }
     }
-    
+
     struct ESPNWinProbability: Decodable {
         let homeWinPercentage: Double
         let playId: String?
@@ -336,7 +328,7 @@ struct ESPNPlay: Codable, Identifiable {
     let team: ESPNPlayTeam?
     let type: ESPNPlayType?
     let strength: ESPNPlayStrength?
-    
+
     struct ESPNPeriod: Codable { let number: Int }
     struct ESPNClock: Codable {
         let displayValue: String

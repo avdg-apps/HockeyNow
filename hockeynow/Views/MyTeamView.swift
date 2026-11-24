@@ -14,7 +14,6 @@ struct MyTeamView: View {
         return teams
     }
 
-    // The team being viewed: the main favourite unless another followed team was picked from the chips at the top.
     private var favouriteTeamAbbreviation: String {
         if let override = viewedTeamOverride, followedTeams.contains(override) { return override }
         return primaryFavouriteAbbreviation
@@ -49,7 +48,6 @@ struct MyTeamView: View {
         nhlAllTeams.first(where: { $0.abbreviation == favouriteTeamAbbreviation })?.name ?? "Favourite Team"
     }
 
-    // Games for the selected team and season.
     private var favouriteTeamGames: [ESPNEvent] {
         fetcher.seasonGames
             .filter { fetcher.showPreseasonOnly ? $0.isPreseasonGame : !$0.isPreseasonGame }
@@ -93,7 +91,6 @@ struct MyTeamView: View {
 
                         PreseasonToggle(fetcher: fetcher)
 
-                        // Changing the season reloads its games and standings.
                         Menu {
                             ForEach((2016...currentSeasonStartYear).reversed(), id: \.self) { year in
                                 Button {
@@ -161,7 +158,6 @@ struct MyTeamView: View {
         .task(id: selectedSeasonStartYear) {
             await fetcher.loadSeason(startingIn: selectedSeasonStartYear)
         }
-        // Re-totals the roster whenever the team, the season or the number of finished games changes.
         .task(id: playerSummaryKey) {
             await loadPlayerSummary()
         }
@@ -171,7 +167,6 @@ struct MyTeamView: View {
         favouriteTeamGames.filter { $0.abstractState == "Final" }
     }
 
-    // A cheap fingerprint (no per-game copying) so the roster is only re-totalled when something real changed.
     private var playerSummaryKey: String {
         let finishedCount = fetcher.seasonGames.reduce(0) { total, game in
             let involves = game.awayTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation
@@ -194,7 +189,6 @@ struct MyTeamView: View {
         isLoadingPlayerSummary = false
     }
 
-    // MARK: Playoff race
     @ViewBuilder
     private var playoffRaceCard: some View {
         if let race = playoffRace {
@@ -211,7 +205,6 @@ struct MyTeamView: View {
         }
     }
 
-    // MARK: Injuries
     @ViewBuilder
     private var injurySection: some View {
         let entries = injuries.entries(forTeamName: nhlAllTeams.first(where: { $0.abbreviation == favouriteTeamAbbreviation })?.name ?? "")
@@ -241,7 +234,6 @@ struct MyTeamView: View {
         }
     }
 
-    // MARK: Followed teams
     private var teamChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -261,7 +253,6 @@ struct MyTeamView: View {
         }
     }
 
-    // MARK: Next game countdown
     @ViewBuilder
     private var nextGameCountdown: some View {
         if let next = upcomingGames.first, let away = next.awayTeam, let home = next.homeTeam, let date = next.systemCalendarDate {
@@ -288,7 +279,6 @@ struct MyTeamView: View {
                     Text("\(away.score.isEmpty ? "0" : away.score) - \(home.score.isEmpty ? "0" : home.score)")
                         .font(.system(size: 20, weight: .black, design: .monospaced))
                 } else {
-                    // Ticks once a second; only this label redraws.
                     TimelineView(.periodic(from: .now, by: 1)) { timeline in
                         Text(hockeyNowCountdownText(until: date, now: timeline.date))
                             .font(.system(size: 20, weight: .black, design: .monospaced))
@@ -302,7 +292,6 @@ struct MyTeamView: View {
         }
     }
 
-    // MARK: Goalies, forwards, defence
     @ViewBuilder
     private var teamPlayersSection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -384,7 +373,6 @@ struct MyTeamView: View {
     }
 
     private var favouriteTeamHeader: some View {
-        // Use the logo URL returned by ESPN rather than a bundled image.
         let team = favouriteTeamGames
             .first(where: { $0.awayTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation || $0.homeTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation })
         let teamCompetitor = team?.awayTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation
@@ -497,7 +485,6 @@ struct MyTeamView: View {
                         toggleClick: {
                             let spring = Animation.spring(response: 0.35, dampingFraction: 0.82, blendDuration: 0)
                             if expandedGameID == game.id { withAnimation(spring) { expandedGameID = nil }; return }
-                            // Open once the game's details are ready, so it never expands into a loading panel.
                             if fetcher.hasDetails(for: game.id) { withAnimation(spring) { expandedGameID = game.id }; return }
                             Task {
                                 await fetcher.ensureDetails(for: game.id)

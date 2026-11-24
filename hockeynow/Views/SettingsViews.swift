@@ -16,7 +16,7 @@ struct SettingsSectionHeader: View {
 struct SettingsRow<Content: View>: View {
     let label: String
     @ViewBuilder var content: Content
-    
+
     var body: some View {
         HStack {
             Text(label).font(.system(size: 12, weight: .medium, design: .monospaced)).foregroundColor(.primary)
@@ -48,23 +48,23 @@ struct SettingsDropdownView: View {
     @AppStorage("smart_menu_bar_text") private var smartMenuBarText: Bool = false
     @State private var showCopiedAddressFeedback: Bool = false
     @EnvironmentObject private var updaterViewModel: UpdaterViewModel
-    
+
     private var accentColorBinding: Binding<Color> {
         Binding(get: { Color(hex: customAccentHex) }, set: { customAccentHex = $0.hexString })
     }
-    
+
     @AppStorage("extra_favorite_teams") private var extraFavouriteTeamsRaw: String = ""
-    
+
     private var extraFavouriteList: [String] {
         extraFavouriteTeamsRaw.split(separator: ",").map(String.init).filter { !$0.isEmpty }
     }
-    
+
     private func toggleExtraFavourite(_ abbreviation: String) {
         var list = extraFavouriteList
         if let index = list.firstIndex(of: abbreviation) { list.remove(at: index) } else { list.append(abbreviation) }
         extraFavouriteTeamsRaw = list.sorted().joined(separator: ",")
     }
-    
+
     private var favoriteTeamBinding: Binding<String> {
         Binding(
             get: { favoriteTeamAbbreviation },
@@ -76,7 +76,7 @@ struct SettingsDropdownView: View {
             }
         )
     }
-    
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
         VStack(alignment: .leading, spacing: 12) {
@@ -88,35 +88,35 @@ struct SettingsDropdownView: View {
                         Text("Dark").tag(AppTheme.dark)
                     }.pickerStyle(.menu).labelsHidden().frame(width: 160)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("language")) {
                     Picker("", selection: $currentLanguageSelection) {
                         ForEach(AppLanguage.allCases) { lang in Text(lang.displayName).tag(lang) }
                     }.pickerStyle(.menu).labelsHidden().frame(width: 160)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("timezone")) {
                     Picker("", selection: $fetcher.targetZone) {
                         ForEach(TimeZoneOption.allOptions) { option in Text(option.label).tag(option.zone) }
                     }.pickerStyle(.menu).labelsHidden().frame(width: 160)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("launchAtLogin")) {
                     Toggle("", isOn: launchAtLoginBinding).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("twentyFourHour")) {
                     Toggle("", isOn: $use24HourTime).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("hideDockIcon")) {
                     Toggle("", isOn: showDockIconBinding).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("automaticUpdates")) {
                     Toggle("", isOn: automaticUpdatesBinding).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 HStack(spacing: 6) {
                     Button(role: .destructive) {
                         fetcher.clearSavedGameData()
@@ -129,7 +129,7 @@ struct SettingsDropdownView: View {
                     Text("Box scores and past schedules kept on this Mac for faster launches.")
                         .font(.system(size: 10, design: .monospaced)).foregroundColor(.secondary.opacity(0.8))
                 }.padding(.top, 4)
-                
+
                 HStack(spacing: 14) {
                     Button(action: openBugReportEmail) {
                         HStack(spacing: 6) {
@@ -137,7 +137,7 @@ struct SettingsDropdownView: View {
                             Text(currentLanguage.localize("contactDeveloper")).font(.system(size: 12, weight: .medium, design: .monospaced))
                         }
                     }.buttonStyle(.plain).foregroundColor(.secondary)
-                    
+
                     Button(action: { updaterViewModel.checkForUpdates() }) {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 11))
@@ -147,7 +147,7 @@ struct SettingsDropdownView: View {
                         .disabled(!updaterViewModel.canCheckForUpdates)
                         .opacity(updaterViewModel.canCheckForUpdates ? 1 : 0.4)
                 }.padding(.top, 4)
-                
+
                 if showCopiedAddressFeedback {
                     Text(currentLanguage.localize("copiedAddress"))
                         .font(.system(size: 10, design: .monospaced))
@@ -170,11 +170,11 @@ struct SettingsDropdownView: View {
                         }
                     }.pickerStyle(.menu).labelsHidden().frame(width: 160)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("notiLabel")) {
                     Toggle("", isOn: $systemAlertsActive).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 14) {
                         Button { notifications.sendTest() } label: {
@@ -199,7 +199,7 @@ struct SettingsDropdownView: View {
                         .foregroundColor(.secondary)
                 }
                 .task { await notifications.refreshStatus() }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: "Goal alerts: my team only") {
                         Toggle("", isOn: $goalAlertsFavouriteOnly).toggleStyle(.switch).labelsHidden()
@@ -208,7 +208,7 @@ struct SettingsDropdownView: View {
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: "Period & final alerts") {
                         Toggle("", isOn: $periodAlertsEnabled).toggleStyle(.switch).labelsHidden()
@@ -217,7 +217,7 @@ struct SettingsDropdownView: View {
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: "Game-day alerts") {
                         Toggle("", isOn: $gameDayAlertsEnabled).toggleStyle(.switch).labelsHidden()
@@ -226,9 +226,9 @@ struct SettingsDropdownView: View {
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
-                
+
                 AlertProfilesView()
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: "Smart menu bar text") {
                         Toggle("", isOn: $smartMenuBarText).toggleStyle(.switch).labelsHidden()
@@ -237,7 +237,7 @@ struct SettingsDropdownView: View {
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("favoriteTeam")) {
                     Picker("", selection: favoriteTeamBinding) {
                         Text(currentLanguage.localize("favoriteTeamNone")).tag("")
@@ -246,7 +246,7 @@ struct SettingsDropdownView: View {
                         }
                     }.pickerStyle(.menu).labelsHidden().frame(width: 160)
                 }
-                
+
                 SettingsRow(label: "Also follow") {
                     Menu {
                         ForEach(nhlAllTeams.filter { $0.abbreviation != favoriteTeamAbbreviation }, id: \.abbreviation) { team in
@@ -267,11 +267,11 @@ struct SettingsDropdownView: View {
                     .menuStyle(.borderlessButton)
                     .frame(width: 160)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("advancedTheme")) {
                     ColorPicker("", selection: accentColorBinding, supportsOpacity: false).labelsHidden()
                 }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: currentLanguage.localize("lowPowerMode")) {
                         Toggle("", isOn: $lowPowerModeEnabled).toggleStyle(.switch).labelsHidden()
@@ -280,15 +280,15 @@ struct SettingsDropdownView: View {
                         .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("goalAlertSound")) {
                     Toggle("", isOn: $goalAlertSoundEnabled).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 SettingsRow(label: currentLanguage.localize("disableNotchHUD")) {
                     Toggle("", isOn: $notchHUDEnabled).toggleStyle(.switch).labelsHidden()
                 }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: "Notch live alerts") {
                         Picker("", selection: $notchPopoutStyle) {
@@ -300,7 +300,7 @@ struct SettingsDropdownView: View {
                     Text("What the notch does on a goal, penalty or period end in your team's game.")
                         .font(.system(size: 10, design: .monospaced)).foregroundColor(.secondary)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 3) {
                     SettingsRow(label: "Skip if another game is shown") {
                         Toggle("", isOn: $notchPopoutSkipOtherGame).toggleStyle(.switch).labelsHidden()
@@ -316,7 +316,7 @@ struct SettingsDropdownView: View {
         .background(Color.primary.opacity(0.03))
         .frame(height: 480, alignment: .top)
     }
-    
+
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(
             get: { SMAppService.mainApp.status == .enabled },
@@ -330,7 +330,7 @@ struct SettingsDropdownView: View {
             }
         )
     }
-    
+
     private var showDockIconBinding: Binding<Bool> {
         Binding(
             get: { NSApp.activationPolicy() == .regular },
@@ -342,14 +342,14 @@ struct SettingsDropdownView: View {
             }
         )
     }
-    
+
     private var automaticUpdatesBinding: Binding<Bool> {
         Binding(
             get: { updaterViewModel.automaticallyChecksForUpdates },
             set: { updaterViewModel.automaticallyChecksForUpdates = $0 }
         )
     }
-    
+
     private func openBugReportEmail() {
         let subject = "HockeyNow Bug Report"
         let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? subject

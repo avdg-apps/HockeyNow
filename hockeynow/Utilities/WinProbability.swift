@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Win probability helpers
-// ESPN reports win probability either as a fraction (0.58) or a percentage (58). Everything inside the app uses fractions.
 func normalizedWinProbability(_ series: [Double]) -> [Double] {
     guard let maxValue = series.max() else { return series }
     return maxValue > 1.0 ? series.map { $0 / 100.0 } : series
@@ -9,8 +7,6 @@ func normalizedWinProbability(_ series: [Double]) -> [Double] {
 
 func normalizedWinProbability(_ value: Double) -> Double { value > 1.0 ? value / 100.0 : value }
 
-// A simple model used only when ESPN publishes no number: goals are Poisson with a rate tilted by the pre-game
-// favourite, and the chance of winning is the chance the final margin is positive (ties go to overtime).
 enum WinProbabilityModel {
     private static func poisson(mean: Double, upTo n: Int) -> [Double] {
         var out = [Double](repeating: 0, count: n + 1)
@@ -22,7 +18,7 @@ enum WinProbabilityModel {
     static func homeWin(lead: Int, regulationSecondsLeft: Double, pregameHome: Double) -> Double {
         let minutes = max(regulationSecondsLeft, 0) / 60.0
         let tilt = 0.8 * (pregameHome - 0.5)
-        let muHome = 0.055 * minutes * exp(tilt)      // ~3.3 goals per team per 60 minutes
+        let muHome = 0.055 * minutes * exp(tilt)
         let muAway = 0.055 * minutes * exp(-tilt)
         let n = 18
         let ph = poisson(mean: muHome, upTo: n), pa = poisson(mean: muAway, upTo: n)
@@ -35,7 +31,6 @@ enum WinProbabilityModel {
         return min(max(win + tie * overtimeEdge, 0.005), 0.995)
     }
 
-    /// Blend season results, recent form and goal differential, then add a small home-ice bump.
     static func pregameHome(
         homePointsPct: Double,
         awayPointsPct: Double,
@@ -57,6 +52,6 @@ enum WinProbabilityModel {
 
 struct WinProbabilityReading {
     let homeFraction: Double
-    let isEstimate: Bool       // true when computed locally rather than published by ESPN
+    let isEstimate: Bool
     let isPregame: Bool
 }

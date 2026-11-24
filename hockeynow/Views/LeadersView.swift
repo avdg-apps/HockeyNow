@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - League leaders
-// Top 10 in each category for all skaters, rookies, and goalies, totalled from the season's finished games.
 struct LeadersView: View {
     @ObservedObject var fetcher: ESPNNHLFetcher
     @StateObject private var rookies = RookieDirectory()
@@ -127,7 +125,6 @@ struct LeadersView: View {
         }
     }
 
-    // Players on the same number share a rank, written "T2".
     private func rankInfo(_ index: Int, in rows: [Row]) -> (label: String, number: Int) {
         let value = rows[index].value
         let first = rows.firstIndex { $0.value == value } ?? index
@@ -159,7 +156,6 @@ struct LeadersView: View {
         .padding(.horizontal, 10).padding(.vertical, 6)
     }
 
-    // MARK: Data
     private func teamIDs() -> [String] {
         (fetcher.seasonGames + fetcher.rawFetchedGames).flatMap { $0.competitions.first?.competitors.map(\.id) ?? [] }
     }
@@ -178,7 +174,6 @@ struct LeadersView: View {
             var skaters = fetcher.skaterLeaders
             if onlyRookies { skaters = skaters.filter { rookieIDs.contains($0.id) } }
             if category == .pointsPerGame {
-                // A minimum number of games keeps one-game wonders off the list.
                 let minimum = min(10, max(1, (skaters.map(\.gamesPlayed).max() ?? 1) / 2))
                 skaters = skaters.filter { $0.gamesPlayed >= minimum }
             }

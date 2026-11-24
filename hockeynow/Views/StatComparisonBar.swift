@@ -1,7 +1,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Model
 struct StatBarModel: Identifiable {
     let id: String
     let title: String
@@ -9,10 +8,9 @@ struct StatBarModel: Identifiable {
     let homeText: String
     var awaySub: String? = nil
     var homeSub: String? = nil
-    let awayShare: Double        // 0...1, the away team's portion of the bar
+    let awayShare: Double
 }
 
-// MARK: - Bar shape (slanted inner ends, like the ESPN face-off bar)
 struct SlantedBarShape: Shape {
     var leftIsSlanted: Bool
     var rightIsSlanted: Bool
@@ -42,7 +40,7 @@ struct SlantedSplitBar: View {
             let slant = SlantedBarShape.slant(for: height)
             let gap: CGFloat = 3
             let share = CGFloat(min(max(awayShare, 0.05), 0.95))
-            let awayMid = share * (width - gap)                 // visible length of the away bar, measured mid-height
+            let awayMid = share * (width - gap)
             let awayWidth = awayMid + slant / 2
             let homeX = awayWidth - slant + gap
             ZStack(alignment: .topLeading) {
@@ -60,7 +58,6 @@ struct SlantedSplitBar: View {
     }
 }
 
-// MARK: - Row: big numbers either side, title between, bar beneath, counts under that
 struct StatComparisonBar: View {
     let model: StatBarModel
     let awayColor: Color
@@ -68,14 +65,12 @@ struct StatComparisonBar: View {
     var compact = false
     var onDark = false
 
-    // Slightly lifted on the black notch so dark team colours stay visible, but kept calm so the goals stay the focus.
     private func tuned(_ color: Color) -> Color {
         guard onDark else { return color.opacity(0.9) }
         let base = NSColor(color)
         return Color(nsColor: base.blended(withFraction: 0.3, of: .white) ?? base).opacity(0.85)
     }
 
-    // Same monospaced type as the rest of the app, kept small so the rows read as supporting detail.
     var body: some View {
         VStack(spacing: compact ? 3 : 4) {
             ZStack {
@@ -106,7 +101,6 @@ struct StatComparisonBar: View {
     }
 }
 
-// MARK: - The four game-stat bars + win probability, built from a game's statistics
 struct GameStatBarsView: View {
     let game: ESPNEvent
     @ObservedObject var fetcher: ESPNNHLFetcher
@@ -147,7 +141,6 @@ struct WinProbabilityBarView: View {
     }
 }
 
-// MARK: - Reading stats
 extension ESPNNHLFetcher {
     private func normalizedStatName(_ name: String) -> String {
         name.lowercased().filter { $0.isLetter || $0.isNumber }
@@ -169,7 +162,6 @@ extension ESPNNHLFetcher {
         return nil
     }
 
-    // "1/3" style values (goals / opportunities).
     private func fraction(_ stats: [ESPNEvent.ESPNCompetitor.ESPNStatistic], _ keys: [String]) -> (Double, Double)? {
         let wanted = Set(keys.map(normalizedStatName))
         for stat in stats where wanted.contains(normalizedStatName(stat.name)) {
@@ -186,7 +178,6 @@ extension ESPNNHLFetcher {
         let a = stats(for: game, teamID: game.awayTeam?.id), h = stats(for: game, teamID: game.homeTeam?.id)
         var bars: [StatBarModel] = []
 
-        // Face-offs: percentage big, "won/total" underneath.
         let awayWon = number(a, ["faceoffsWon", "faceoffWon"]), homeWon = number(h, ["faceoffsWon", "faceoffWon"])
         if let aw = awayWon, let hw = homeWon, aw + hw > 0 {
             let total = aw + hw
@@ -198,7 +189,6 @@ extension ESPNNHLFetcher {
             bars.append(StatBarModel(id: "faceoffs", title: "Face-off %", awayText: String(format: "%.1f%%", ap), homeText: String(format: "%.1f%%", hp), awayShare: ap / 100))
         }
 
-        // Power plays: goals/opportunities big; the bar shows who has had more chances.
         let agoals = number(a, ["powerPlayGoals"]), hgoals = number(h, ["powerPlayGoals"])
         var aopp = number(a, ["powerPlayOpportunities", "powerPlays"]), hopp = number(h, ["powerPlayOpportunities", "powerPlays"])
         var ag = agoals, hg = hgoals

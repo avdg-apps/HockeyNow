@@ -1,17 +1,16 @@
 import Foundation
 import Combine
 
-// MARK: - Result types
 struct FormGame: Identifiable {
     let id: String
     let result: GameResult
     let opponent: String
-    let scoreText: String      // "4-2" from the team's point of view
+    let scoreText: String
     let wasHome: Bool
 }
 
 struct TeamFormSnapshot {
-    var lastFive: [FormGame] = []       // oldest first, so the newest result sits at the right-hand end of the strip
+    var lastFive: [FormGame] = []
     var home = SplitRecord()
     var away = SplitRecord()
     var hasGames: Bool { !lastFive.isEmpty || home.wins + home.losses + home.otLosses + away.wins + away.losses + away.otLosses > 0 }
@@ -33,7 +32,6 @@ struct LineupPlayer: Identifiable {
     let timeOnIce: String
 }
 
-// Forwards in lines of three, defence in pairs, and the goalies, ordered by ice time.
 struct TeamLineup {
     var forwardLines: [[LineupPlayer]] = []
     var defencePairs: [[LineupPlayer]] = []
@@ -54,13 +52,9 @@ struct TeamPlayerSummary {
     var isEmpty: Bool { forwards.isEmpty && defense.isEmpty && goalies.isEmpty }
 }
 
-// MARK: - Insights computed from games the app has already loaded
 extension ESPNNHLFetcher {
 
-    // Finished games for one team that were played before `date`, oldest first.
-    // Preseason and regular-season/playoff games are never mixed.
     func finishedGames(for abbreviation: String, before date: Date, preseason: Bool) -> [ESPNEvent] {
-        // The team's finished games for the season containing `date`, sorted once and reused; this runs for every card on screen.
         let cacheKey = "\(seasonKeyForCaches(date))|\(abbreviation)|\(preseason)"
         let all: [ESPNEvent]
         if let cached = finishedGamesCache[cacheKey] { all = cached }
@@ -76,7 +70,6 @@ extension ESPNNHLFetcher {
         return Array(all.prefix { ($0.systemCalendarDate ?? .distantFuture) < date })
     }
 
-    // How a finished game went for one team. Level scores (not a real final) give nil.
     func result(of game: ESPNEvent, for abbreviation: String) -> (result: GameResult, own: Int, other: Int, opponent: String, wasHome: Bool)? {
         guard let away = game.awayTeam, let home = game.homeTeam else { return nil }
         let isHome = home.team.threeLetterAbbreviation == abbreviation
@@ -102,7 +95,6 @@ extension ESPNNHLFetcher {
         return snapshot
     }
 
-    // "TOR won 2 of the last 3 against MTL" (this season's meetings, as far as they have been loaded).
     func headToHeadLine(perspective: String, opponent: String, before date: Date, preseason: Bool) -> String {
         let meetings = finishedGames(for: perspective, before: date, preseason: preseason)
             .filter { $0.awayTeam?.team.threeLetterAbbreviation == opponent || $0.homeTeam?.team.threeLetterAbbreviation == opponent }
@@ -117,8 +109,6 @@ extension ESPNNHLFetcher {
         return "\(perspective) won \(wins) of the last \(outcomes.count) against \(opponent)"
     }
 
-    // MARK: Goalies
-    // The goalie who played the most minutes for a team in one boxscore.
     private func startingGoalie(in groups: [ESPNGameSummary.ESPNBoxscore.ESPNBoxscorePlayerGroup], teamID: String) -> (id: String, name: String)? {
         for group in groups where group.team?.id == teamID {
             var best: (id: String, name: String, toi: Int)?
@@ -143,14 +133,12 @@ extension ESPNNHLFetcher {
         return nil
     }
 
-    // Games whose boxscores are needed to guess a team's starter (its last five finished games).
     func starterGameIDs(for abbreviation: String, before date: Date, preseason: Bool) -> [String] {
         finishedGames(for: abbreviation, before: date, preseason: preseason).suffix(5).map(\.id)
     }
 
-    // Likely starter = the goalie who started most of the team's last five games; a tie goes to the most recent starter.
     func likelyStarter(for abbreviation: String, before date: Date, preseason: Bool) -> GoalieStarter? {
-        let games = Array(finishedGames(for: abbreviation, before: date, preseason: preseason).suffix(5).reversed())   // newest first
+        let games = Array(finishedGames(for: abbreviation, before: date, preseason: preseason).suffix(5).reversed())
         var starts: [String: (name: String, count: Int, newestIndex: Int)] = [:]
         var considered = 0
         for (index, game) in games.enumerated() {
@@ -173,7 +161,6 @@ extension ESPNNHLFetcher {
                              goalsAgainstAverage: (season?.gamesPlayed ?? 0) > 0 ? season?.goalsAgainstAverage : nil)
     }
 
-    // Downloads (or reads from disk) any boxscores that are not in memory yet.
     func ensureBoxscores(forGameIDs ids: [String]) async {
         let missing = ids.filter { playerBoxscoreCache[$0] == nil }
         guard !missing.isEmpty else { return }
@@ -193,8 +180,6 @@ extension ESPNNHLFetcher {
         objectWillChange.send()
     }
 
-    // MARK: My Team players
-    // Goalies, forwards and defence for one team, totalled from its finished games.
     func teamPlayerSummary(for abbreviation: String, finalGames: [ESPNEvent]) async -> TeamPlayerSummary {
         await ensureBoxscores(forGameIDs: finalGames.map(\.id))
 
@@ -275,9 +260,6 @@ extension ESPNNHLFetcher {
         )
     }
 
-    // MARK: Lines
-    // ESPN has no published line combinations, so lines are built from the players who dressed, ordered by ice time:
-    // the top three forwards by ice time are line one, the top two defencemen are the first pair, and so on.
     func lineup(from groups: [ESPNGameSummary.ESPNBoxscore.ESPNBoxscorePlayerGroup], teamID: String) -> TeamLineup? {
         let forwardPositions: Set<String> = ["C", "LW", "RW", "L", "R", "W", "F"]
         var forwards: [(LineupPlayer, Int)] = []
@@ -323,7 +305,6 @@ extension ESPNNHLFetcher {
         return lineup.isEmpty ? nil : lineup
     }
 
-    // The lineup for a game: the real one when the game has started, otherwise the team's last finished game.
     func gameLineup(for game: ESPNEvent, teamAbbreviation: String) -> (lineup: TeamLineup, isActual: Bool)? {
         guard let teamID = game.competitions.first?.competitors.first(where: { $0.team.threeLetterAbbreviation == teamAbbreviation })?.id else { return nil }
         if game.abstractState != "Preview", let groups = gameLineups[game.id], let actual = lineup(from: groups, teamID: teamID) {
@@ -337,8 +318,6 @@ extension ESPNNHLFetcher {
         return (likely, false)
     }
 
-    // MARK: Playoff race
-    // Divisional format: the top three in each division, then the two best remaining teams in the conference.
     func playoffRace(for abbreviation: String) -> PlayoffRaceInfo? {
         guard !showPreseasonOnly, !abbreviation.isEmpty,
               let myDivision = nhlDivisionOrder.first(where: { $0.teams.contains(abbreviation) }) else { return nil }

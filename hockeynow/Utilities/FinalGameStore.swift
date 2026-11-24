@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Saved game details
-// Everything the app needs to redraw a finished game without asking ESPN again.
 struct SavedGameDetails: Codable {
     var scoringPlays: [ESPNPlay]
     var teamStats: [String: [ESPNEvent.ESPNCompetitor.ESPNStatistic]]
@@ -11,10 +9,6 @@ struct SavedGameDetails: Codable {
     var lineups: [ESPNGameSummary.ESPNBoxscore.ESPNBoxscorePlayerGroup]? = nil
 }
 
-// MARK: - On-disk store for finished games
-// A finished game never changes, so once it has been downloaded it is saved under Application Support and read back on
-// later launches instead of being fetched again. That makes launch much faster and saves network and energy.
-// Bump `schemaVersion` if the saved shapes ever change; old files are then simply ignored.
 enum FinalGameStore {
     private nonisolated static let schemaVersion = "v1"
 
@@ -33,7 +27,6 @@ enum FinalGameStore {
     }
 
     private nonisolated static func fileURL(kind: String, id: String) -> URL {
-        // IDs are numeric, but strip anything unexpected so they can never escape the folder.
         let safe = id.filter { $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }
         return folder(kind).appendingPathComponent("\(safe).json")
     }
@@ -48,7 +41,6 @@ enum FinalGameStore {
         return try? JSONDecoder().decode(type, from: data)
     }
 
-    // Whole past months of the schedule are stored as the raw ESPN response.
     nonisolated static func saveMonth(_ data: Data, key: String) { try? data.write(to: fileURL(kind: "months", id: key), options: .atomic) }
     nonisolated static func loadMonth(key: String) -> Data? { try? Data(contentsOf: fileURL(kind: "months", id: key)) }
 

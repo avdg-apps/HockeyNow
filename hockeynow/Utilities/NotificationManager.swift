@@ -2,9 +2,6 @@ import AppKit
 import UserNotifications
 import Combine
 
-// MARK: - Notifications (Apple's UserNotifications)
-// A menu bar app is often treated as "frontmost", and macOS then drops banners unless the delegate explicitly allows
-// them in willPresent. The delegate also has to be set before any notification is posted.
 @MainActor
 final class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
@@ -28,7 +25,6 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
     func requestAuthorizationIfNeeded() async {
         await refreshStatus()
         guard status == .notDetermined else { return }
-        // An accessory (menu bar) app must be active for macOS to show the permission prompt.
         NSApp.activate(ignoringOtherApps: true)
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
         await refreshStatus()
@@ -40,7 +36,6 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         for string in urls { if let url = URL(string: string), NSWorkspace.shared.open(url) { return } }
     }
 
-    // One place that posts an alert. `url` is opened when the banner is clicked (for example the game page).
     static func post(title: String, body: String, identifier: String, url: URL?) {
         let content = UNMutableNotificationContent()
         content.title = title
@@ -61,7 +56,6 @@ final class NotificationManager: NSObject, ObservableObject, UNUserNotificationC
         }
     }
 
-    // Show banners even while HockeyNow counts as the active app.
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                             withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .list, .sound])

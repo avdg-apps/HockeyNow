@@ -23,7 +23,6 @@ let nhlTeamHomeColorHex: [String: String] = [
     "VAN": "00205B", "VGK": "B4975A", "WPG": "041E42", "WSH": "C8102E"
 ]
 
-// MARK: - Team Colours
 func getNHLTeamColor(abbreviation: String) -> Color {
     let team = abbreviation.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
     let colorMap: [String: Color] = [
@@ -63,9 +62,6 @@ func getNHLTeamColor(abbreviation: String) -> Color {
     return colorMap[team] ?? Color.green
 }
 
-// MARK: - Away colours
-// The colour a team uses when it is the visiting side, picked to stay readable on dark backgrounds and to differ from
-// the home colour of the team it is most likely to clash with.
 let nhlTeamAwayColorHex: [String: String] = [
     "ANA": "B9975B", "BOS": "9EA2A2", "BUF": "FFB81C", "CAR": "A2AAAD",
     "CBJ": "C8102E", "CGY": "F1BE48", "CHI": "FF671B", "COL": "236192",
@@ -89,7 +85,6 @@ private func rgbComponents(_ color: Color) -> (r: Double, g: Double, b: Double) 
     return (Double(ns?.redComponent ?? 0), Double(ns?.greenComponent ?? 0), Double(ns?.blueComponent ?? 0))
 }
 
-// 0 (black) ... 1 (white)
 func colorBrightness(_ color: Color) -> Double {
     let c = rgbComponents(color)
     return c.r * 0.299 + c.g * 0.587 + c.b * 0.114
@@ -101,16 +96,12 @@ func colorsAreSimilar(_ a: Color, _ b: Color, threshold: Double = 0.30) -> Bool 
     return distance < threshold
 }
 
-// The colour for a team in one game. The home team always keeps its own colour; the visiting team switches to its
-// away colour when the two home colours would be hard to tell apart (FLA and CBJ, for example).
 func getGameTeamColor(abbreviation: String, isHome: Bool, opponent: String) -> Color {
     let own = getNHLTeamColor(abbreviation: abbreviation)
     if isHome { return own }
     return colorsAreSimilar(own, getNHLTeamColor(abbreviation: opponent)) ? getNHLTeamAwayColor(abbreviation: abbreviation) : own
 }
 
-// Colour for "my team" text and highlights. Light mode uses the home colour. Dark mode uses the away colour when it
-// is lighter than the home colour, since dark home colours (navy, burgundy) disappear on a dark background.
 func getReadableFavouriteTeamColor(abbreviation: String, theme: AppTheme, colorScheme: ColorScheme? = nil) -> Color {
     let isDark = colorScheme.map { $0 == .dark } ?? (theme == .dark)
     let home = getNHLTeamColor(abbreviation: abbreviation)

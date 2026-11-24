@@ -1,11 +1,10 @@
 import SwiftUI
 
-// MARK: - Header
 struct ContentViewHeader: View {
     let currentLanguage: AppLanguage; let displayDateString: String; @ObservedObject var fetcher: ESPNNHLFetcher
     @Binding var revealSettings: Bool; @Binding var activeTab: ActiveTabSelection; @Binding var settingsSection: SettingsSection; @Binding var showSidebar: Bool
     @State private var showCalendarPopover = false; let shiftDateAction: (Int) -> Void
-    
+
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 0) {
@@ -31,7 +30,7 @@ struct ContentViewHeader: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                
+
                 HStack(spacing: 8) {
                         Button(action: { shiftDateAction(-1) }) {
                             Image(systemName: "chevron.left").font(.system(size: 13, weight: .bold)).padding(6).background(Color.primary.opacity(0.06)).cornerRadius(6)
@@ -43,7 +42,7 @@ struct ContentViewHeader: View {
                             Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).padding(6).background(Color.primary.opacity(0.06)).cornerRadius(6)
                         }.buttonStyle(.plain)
                     }.padding(.horizontal, 10)
-                    
+
                     HStack(spacing: 10) {
                         if !fetcher.localFilteredGames.isEmpty {
                             Button(action: { fetcher.cycleTicker() }) {
@@ -59,7 +58,7 @@ struct ContentViewHeader: View {
                         Button(action: { withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) { revealSettings = true } }) {
                             Image(systemName: "gearshape.fill").font(.system(size: 15)).foregroundColor(.primary)
                         }.buttonStyle(.plain)
-                        
+
                         if fetcher.isLoading { ProgressView().controlSize(.small) }
                         else {
                             Button(action: { fetcher.runCleanFetch() }) { Image(systemName: "arrow.clockwise").font(.system(size: 15)) }.buttonStyle(.plain)
@@ -77,7 +76,7 @@ struct ContentViewHeader: View {
             }
 
         }
-    
+
         .padding(.horizontal, 18).padding(.vertical, 14)
     }
 }

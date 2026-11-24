@@ -1,6 +1,5 @@
 import Foundation
 
-// MARK: - Customisation
 enum AppLanguage: String, CaseIterable, Identifiable {
     case english = "en"
     case spanish = "es"
@@ -8,9 +7,9 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case german = "de"
     case italian = "it"
     case finnish = "fi"
-    
+
     var id: String { self.rawValue }
-    
+
     var displayName: String {
         switch self {
         case .english: return "English"
@@ -21,7 +20,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .finnish: return "Suomi"
         }
     }
-    
+
     func localize(_ key: String) -> String {
         let translations: [String: [AppLanguage: String]] = [
             "title": [.english: "HockeyNow", .spanish: "HockeyNow", .french: "HockeyNow", .german: "HockeyNow", .italian: "HockeyNow", .finnish: "HockeyNow"],

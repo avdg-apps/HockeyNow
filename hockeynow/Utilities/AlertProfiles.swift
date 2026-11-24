@@ -1,9 +1,6 @@
 import Foundation
 import Combine
 
-// MARK: - Per-team alert profiles
-// Every followed team can have its own mix of alerts (goals only for one team, finals only for another, a team muted for
-// the night). Profiles are stored as JSON in UserDefaults. A team with no saved profile uses the defaults below.
 enum AlertKind: String, CaseIterable, Identifiable {
     case goals, periods, finals, gameDay, trades, injuries, popouts
     var id: String { rawValue }
@@ -31,7 +28,6 @@ struct TeamAlertProfile: Codable, Equatable {
     var popouts = true
 
     init() {}
-    // Older saved profiles may lack newer switches; missing ones fall back to their defaults instead of discarding everything.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         muted = try c.decodeIfPresent(Bool.self, forKey: .muted) ?? false
@@ -87,13 +83,10 @@ enum AlertProfiles {
         if let data = try? JSONEncoder().encode(current) { UserDefaults.standard.set(data, forKey: defaultsKey) }
     }
 
-    // The followed teams playing in this game.
     static func followedTeams(in away: String, _ home: String) -> [String] {
         hockeyNowFavouriteTeams().filter { $0 == away || $0 == home }
     }
 
-    // Does any followed team in this game want this kind of alert? Games with no followed team return `nil`
-    // so each caller can apply its own rule for strangers (goals respect "my team only"; the rest stay quiet).
     static func followedTeamsAllow(_ kind: AlertKind, away: String, home: String) -> Bool? {
         let teams = followedTeams(in: away, home)
         if teams.isEmpty { return nil }
@@ -101,7 +94,6 @@ enum AlertProfiles {
         return teams.contains { (profiles[$0] ?? TeamAlertProfile()).allows(kind) }
     }
 
-    // Followed teams that want this kind of alert, for team-based alerts such as trades and injuries.
     static func teamsWanting(_ kind: AlertKind) -> Set<String> {
         let profiles = all()
         return Set(hockeyNowFavouriteTeams().filter { (profiles[$0] ?? TeamAlertProfile()).allows(kind) })

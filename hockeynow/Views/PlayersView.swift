@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Players Panel
 struct PlayersView: View {
     @ObservedObject var fetcher: ESPNNHLFetcher
     let currentLanguage: AppLanguage
@@ -12,12 +11,12 @@ struct PlayersView: View {
     @State private var minGamesPlayed: Int = 0
     @State private var skaterSort: SkaterSort = .points
     @State private var goalieSort: GoalieSort = .wins
-    
+
     enum PlayerStatGroup: String, CaseIterable, Identifiable {
         case skaters, goalies
         var id: String { rawValue }
     }
-    
+
     enum SkaterSort: String, CaseIterable, Identifiable {
         case points, goals, assists, team
         var id: String { rawValue }
@@ -30,7 +29,7 @@ struct PlayersView: View {
             }
         }
     }
-    
+
     enum GoalieSort: String, CaseIterable, Identifiable {
         case wins, savePct, shutouts, team
         var id: String { rawValue }
@@ -43,19 +42,18 @@ struct PlayersView: View {
             }
         }
     }
-    
+
     private var playersDateString: String {
         let formatter = DateFormatter(); formatter.dateStyle = .medium; return formatter.string(from: fetcher.playersDate)
     }
-    
-    // Players level on the stat the table is sorted by share a rank, written "T2". Sorting by Team gives plain numbers.
+
     private func tieRankLabel(at index: Int, keys: [String?]) -> String {
         guard keys.indices.contains(index), let key = keys[index] else { return "\(index + 1)" }
         let first = keys.firstIndex { $0 == key } ?? index
         let tied = keys.filter { $0 == key }.count > 1
         return tied ? "T\(first + 1)" : "\(index + 1)"
     }
-    
+
     private func skaterTieKey(_ skater: SkaterSeasonLine) -> String? {
         switch skaterSort {
         case .points: return "\(skater.points)"
@@ -64,7 +62,7 @@ struct PlayersView: View {
         case .team: return nil
         }
     }
-    
+
     private func goalieTieKey(_ goalie: GoalieSeasonLine) -> String? {
         switch goalieSort {
         case .wins: return "\(goalie.wins)"
@@ -73,7 +71,7 @@ struct PlayersView: View {
         case .team: return nil
         }
     }
-    
+
     private var filteredSkaters: [SkaterSeasonLine] {
         var pool = fetcher.skaterLeaders.filter { $0.gamesPlayed >= minGamesPlayed }
         let trimmed = debouncedSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -88,7 +86,7 @@ struct PlayersView: View {
         }
         return Array(pool.prefix(50))
     }
-    
+
     private var filteredGoalies: [GoalieSeasonLine] {
         var pool = fetcher.goalieLeaders.filter { $0.gamesPlayed >= minGamesPlayed }
         let trimmed = debouncedSearchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -103,7 +101,7 @@ struct PlayersView: View {
         }
         return Array(pool.prefix(50))
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -124,7 +122,7 @@ struct PlayersView: View {
                 if fetcher.isLoadingPlayerStats { ProgressView().controlSize(.small).padding(.leading, 4) }
             }
             .padding(.horizontal, 4)
-            
+
             HStack(spacing: 12) {
                 Picker("", selection: $statGroup) {
                     Text(currentLanguage.localize("skaters")).tag(PlayerStatGroup.skaters)
@@ -134,7 +132,7 @@ struct PlayersView: View {
                 PreseasonToggle(fetcher: fetcher)
             }
             .padding(.horizontal, 4)
-            
+
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundColor(.secondary)
                 TextField("Search a player...", text: $searchText)
@@ -158,7 +156,7 @@ struct PlayersView: View {
             .background(Color.primary.opacity(0.05))
             .cornerRadius(8)
             .padding(.horizontal, 4)
-            
+
             HStack(spacing: 10) {
                 HStack(spacing: 6) {
                     Text("Min GP").font(.system(size: 10, weight: .semibold, design: .monospaced)).foregroundColor(.secondary)
@@ -212,7 +210,7 @@ struct PlayersView: View {
                 }
             }
             .padding(.horizontal, 4)
-            
+
             ScrollView {
                 if let progress = fetcher.playerStatsLoadProgress {
                     HStack {
@@ -243,21 +241,17 @@ struct PlayersView: View {
         .padding(14)
         .onAppear { fetcher.loadPlayerLeadersIfNeeded() }
     }
-    
+
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "person.crop.circle.badge.questionmark").font(.system(size: 42)).foregroundColor(.secondary.opacity(0.4))
             Text(fetcher.isLoadingPlayerStats ? "Loading player stats..." : (debouncedSearchText.isEmpty && minGamesPlayed == 0 ? "No stats recorded yet for this date." : "No matching players."))
                 .font(.system(size: 12, weight: .medium, design: .monospaced)).foregroundColor(.secondary)
         }
-        // Forcing full width here is what actually centers this - the outer VStack for this whole
-        // view is left-aligned (so the date/search/filter rows above hug the leading edge like the
-        // rest of the app), and without an explicit frame this block just inherits that instead of
-        // centering itself inside the scroll area.
         .frame(maxWidth: .infinity)
         .padding(.top, 100)
     }
-    
+
     private var skaterTable: some View {
         VStack(spacing: 0) {
             HStack {
@@ -272,7 +266,7 @@ struct PlayersView: View {
             .font(.system(size: 9, weight: .black, design: .monospaced))
             .foregroundColor(.secondary)
             .padding(.vertical, 4).padding(.horizontal, 8)
-            
+
             Divider()
             let skaters = filteredSkaters
             let skaterKeys = skaters.map { skaterTieKey($0) }
@@ -306,7 +300,7 @@ struct PlayersView: View {
         .background(Color.primary.opacity(0.03))
         .cornerRadius(6)
     }
-    
+
     private var goalieTable: some View {
         VStack(spacing: 0) {
             HStack {
@@ -323,9 +317,9 @@ struct PlayersView: View {
             .font(.system(size: 9, weight: .black, design: .monospaced))
             .foregroundColor(.secondary)
             .padding(.vertical, 4).padding(.horizontal, 8)
-            
+
             Divider()
-            
+
             let goalies = filteredGoalies
             let goalieKeys = goalies.map { goalieTieKey($0) }
             LazyVStack(spacing: 0) {
@@ -360,13 +354,13 @@ struct PlayersView: View {
         .background(Color.primary.opacity(0.03))
         .cornerRadius(6)
     }
-    
+
     private func initials(for name: String) -> String {
         let parts = name.split(separator: " ")
         let letters = parts.compactMap { $0.first }.prefix(2)
         return String(letters).uppercased()
     }
-    
+
     private func shiftPlayersDate(by days: Int) {
         if let newDate = Calendar.current.date(byAdding: .day, value: days, to: fetcher.playersDate) {
             fetcher.playersDate = newDate
@@ -374,12 +368,11 @@ struct PlayersView: View {
     }
 }
 
-// MARK: - Headshot
 struct PlayerHeadshotView: View {
     let headshotURLString: String?
     let initials: String
     var size: CGFloat = 20
-    
+
     var body: some View {
         if let urlString = headshotURLString, let url = URL(string: urlString) {
             AsyncImage(url: url) { phase in
@@ -396,7 +389,7 @@ struct PlayerHeadshotView: View {
             fallback
         }
     }
-    
+
     private var fallback: some View {
         ZStack {
             Circle().fill(Color.primary.opacity(0.1))

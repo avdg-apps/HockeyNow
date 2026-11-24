@@ -1,7 +1,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - View Interface
 struct ContentView: View {
     @ObservedObject var fetcher: ESPNNHLFetcher
     @State private var currentLanguage: AppLanguage = .english
@@ -19,15 +18,15 @@ struct ContentView: View {
     @State private var showSidebar: Bool = false
     @State private var openingGameID: String? = nil
     @StateObject private var network = NetworkMonitor()
-    
+
     private var displayDateString: String {
         let formatter = DateFormatter(); formatter.dateStyle = .medium; return formatter.string(from: fetcher.selectedDate)
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             ContentViewHeader(currentLanguage: currentLanguage, displayDateString: displayDateString, fetcher: fetcher, revealSettings: $revealSettings, activeTab: $activeTab, settingsSection: $settingsSection, showSidebar: $showSidebar, shiftDateAction: shiftDate)
-            
+
             if !minimumLoadingDurationElapsed || !fetcher.hasCompletedInitialLoad {
                 EllipsisLoadingView()
                     .task {
@@ -101,7 +100,7 @@ struct ContentView: View {
                     .background(Color.primary.opacity(0.05))
                     .cornerRadius(8)
                     .padding(.horizontal, 18).padding(.top, 10).padding(.bottom, 6)
-                    
+
                     ScrollView {
                         if !debouncedSearchQuery.isEmpty {
                             let searchResults = cachedSearchResults
@@ -146,9 +145,9 @@ struct ContentView: View {
                     }
                 }.frame(height: 480)
             }
-            
+
             Color.white.opacity(0.12).frame(height: 1)
-            
+
             HStack {
                 Button(currentLanguage.localize("quit")) { NSApplication.shared.terminate(nil) }.buttonStyle(.bordered).tint(.red)
                 Spacer()
@@ -164,7 +163,7 @@ struct ContentView: View {
                             .foregroundColor(.secondary.opacity(0.7))
                     }
                 }
-                Text("Version 2.3.3").font(.system(size: 10, design: .monospaced)).foregroundColor(.secondary.opacity(0.7))
+                Text("Version 2.3.0").font(.system(size: 10, design: .monospaced)).foregroundColor(.secondary.opacity(0.7))
             }.padding(12).background(Color.primary.opacity(0.01))
         }
         .overlay(alignment: .leading) {
@@ -175,7 +174,6 @@ struct ContentView: View {
             }
         }
         .frame(width: 560)
-        // Keyboard shortcuts: ⌘1-⌘6 switch tabs, ⌘[ and ⌘] move the Games date a day back or forward.
         .background(
             Group {
                 Button("") { activeTab = .games }.keyboardShortcut("1", modifiers: .command)
@@ -194,8 +192,6 @@ struct ContentView: View {
         .preferredColorScheme(currentTheme.colorScheme)
         .tint(Color(hex: customAccentHex))
     }
-    // A game opens once its details are ready (they are normally loaded already when the day appears), so the card
-    // never expands into an empty "loading" panel.
     private func toggleGame(_ game: ESPNEvent) {
         let spring = Animation.spring(response: 0.35, dampingFraction: 0.82, blendDuration: 0)
         if activeGameID == game.id { withAnimation(spring) { activeGameID = nil }; return }

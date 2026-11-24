@@ -13,8 +13,6 @@ struct InjuryEntry: Identifiable {
     }
 }
 
-// MARK: - Injuries
-// Best effort: ESPN publishes a league-wide injury list. If it is missing or shaped differently, the section stays hidden.
 @MainActor
 final class InjuryReport: ObservableObject {
     @Published private(set) var entriesByTeamName: [String: [InjuryEntry]] = [:]

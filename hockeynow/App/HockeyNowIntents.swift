@@ -1,14 +1,10 @@
 import AppIntents
 import Foundation
 
-// MARK: - Shortcuts and Siri
-// "Hey Siri, next game in HockeyNow" or any Shortcuts action below. The intents run inside the menu bar app, so they use the
-// same data the app already has on screen. Teams can be said or typed as a name ("Edmonton", "Oilers") or abbreviation.
 @MainActor
 enum HockeyNowBridge {
     static weak var fetcher: ESPNNHLFetcher?
 
-    // "edmonton", "oilers", "EDM" -> "EDM". Empty means the favourite team.
     static func resolveTeam(_ text: String) -> String? {
         let query = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if query.isEmpty { return hockeyNowFavouriteTeams().first }

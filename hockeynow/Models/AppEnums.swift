@@ -51,7 +51,7 @@ struct TimeZoneOption: Identifiable, Hashable {
     let id = UUID()
     let label: String
     let zone: TimeZone
-    
+
     static let allOptions: [TimeZoneOption] = [
         TimeZoneOption(label: "📌 Local System Time", zone: .current),
         TimeZoneOption(label: "Hawaii (HST / GMT -10:00)", zone: TimeZone(identifier: "Pacific/Honolulu") ?? .current),

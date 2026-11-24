@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 
-// MARK: - Pinned fantasy players and pick'em choices (kept on this Mac)
 struct PinnedPlayer: Codable, Identifiable, Equatable {
     let id: String
     let name: String
@@ -12,7 +11,7 @@ struct PinnedPlayer: Codable, Identifiable, Equatable {
 
 struct GamePick: Codable, Equatable {
     let gameID: String
-    let pick: String          // team abbreviation
+    let pick: String
     let away: String
     let home: String
     let date: Date
@@ -21,7 +20,7 @@ struct GamePick: Codable, Equatable {
 struct PickRecord {
     var wins = 0
     var losses = 0
-    var streak = 0            // positive = winning run, negative = losing run
+    var streak = 0
     var total: Int { wins + losses }
     var percentage: Int { total == 0 ? 0 : Int((Double(wins) / Double(total) * 100).rounded()) }
 }
@@ -53,7 +52,6 @@ final class PicksFantasyStore: ObservableObject {
     func choose(_ team: String, in game: ESPNEvent) {
         guard game.abstractState == "Preview", let away = game.awayTeam?.team.threeLetterAbbreviation,
               let home = game.homeTeam?.team.threeLetterAbbreviation else { return }
-        // Choosing the same team again clears the pick.
         if picks[game.id]?.pick == team { picks.removeValue(forKey: game.id) }
         else { picks[game.id] = GamePick(gameID: game.id, pick: team, away: away, home: home, date: game.systemCalendarDate ?? Date()) }
         save()
@@ -64,14 +62,12 @@ final class PicksFantasyStore: ObservableObject {
         if let data = try? JSONEncoder().encode(picks) { UserDefaults.standard.set(data, forKey: picksKey) }
     }
 
-    // MARK: Results
     static func winner(of game: ESPNEvent) -> String? {
         guard game.abstractState == "Final", let away = game.awayTeam, let home = game.homeTeam,
               let a = Int(away.score), let h = Int(home.score), a != h else { return nil }
         return a > h ? away.team.threeLetterAbbreviation : home.team.threeLetterAbbreviation
     }
 
-    // Graded picks, oldest first, against every finished game the app knows about.
     func gradedPicks(finals: [ESPNEvent]) -> [(pick: GamePick, correct: Bool)] {
         var winners: [String: String] = [:]
         for game in finals { if let w = Self.winner(of: game) { winners[game.id] = w } }
@@ -90,7 +86,6 @@ final class PicksFantasyStore: ObservableObject {
     }
 }
 
-// MARK: - Fantasy scoring from a live or finished box score
 enum FantasyScoring {
     static let goal = 3.0, assist = 2.0, shot = 0.5
     static let summary = "Goal 3 · Assist 2 · Shot on goal 0.5"
@@ -99,7 +94,6 @@ enum FantasyScoring {
         var points: Double { Double(goals) * FantasyScoring.goal + Double(assists) * FantasyScoring.assist + Double(shots) * FantasyScoring.shot }
     }
 
-    // Looks the player up in the box-score groups ESPN gave for one game.
     static func line(for playerID: String, in groups: [ESPNGameSummary.ESPNBoxscore.ESPNBoxscorePlayerGroup]) -> Line? {
         for group in groups {
             for category in group.statistics ?? [] {

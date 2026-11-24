@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Dashboard Layout
 struct ESPNGameCard: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var detailTab: GameDetailTab = .goals
@@ -10,7 +9,6 @@ struct ESPNGameCard: View {
     @AppStorage("favorite_team_abbreviation") private var favouriteTeamAbbreviation = ""
     @AppStorage("app_theme") private var storedTheme = AppTheme.system.rawValue
 
-    // The away team is drawn on the left of the card and the home team on the right.
     private var favouriteTeamIsHome: Bool {
         guard !favouriteTeamAbbreviation.isEmpty else { return false }
         return liveGameData.homeTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation
@@ -22,21 +20,21 @@ struct ESPNGameCard: View {
         return liveGameData.awayTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation
             || liveGameData.homeTeam?.team.threeLetterAbbreviation == favouriteTeamAbbreviation
     }
-    
+
     private var isPinnedToTicker: Bool { fetcher.pinnedGameInstance?.id == game.id }
     private var isNotchedHUD: Bool { fetcher.notchedGameInstance?.id == game.id }
     private var liveGameData: ESPNEvent { fetcher.applyCachedStats(to: fetcher.rawFetchedGames.first(where: { $0.id == game.id }) ?? game) }
-    
+
     private var linescoreTotals: (away: [Int], home: [Int]) {
         guard let awayID = liveGameData.awayTeam?.id, let homeID = liveGameData.homeTeam?.id else { return ([0,0,0], [0,0,0]) }
         let currentPeriodParam = liveGameData.status.period ?? 1
         let arraySize = max(3, currentPeriodParam)
         var awayP = Array(repeating: 0, count: arraySize); var homeP = Array(repeating: 0, count: arraySize)
-        
+
         guard let plays = fetcher.scoringSummaries[game.id], !plays.isEmpty else {
             return (awayP, homeP)
         }
-        
+
         for play in plays {
             let pIdx = play.period.number - 1
             if pIdx >= 0 && pIdx < arraySize {
@@ -51,16 +49,16 @@ struct ESPNGameCard: View {
         }
         return (awayP, homeP)
     }
-    
+
     private func parseTeamStat(stats: [ESPNEvent.ESPNCompetitor.ESPNStatistic]?, teamID: String, gameID: String, name: String) -> String {
         var runningStats = stats
-        
+
         if (runningStats == nil || runningStats!.isEmpty), let fallbackCache = fetcher.historicalTelemetryCache[gameID], let cachedStats = fallbackCache[teamID] {
             runningStats = cachedStats
         }
-        
+
         guard let validStats = runningStats else { return "-" }
-        
+
         if name == "faceoffsWonPercent" {
             if let directPercent = validStats.first(where: { $0.name == "faceoffPercent" || $0.name == "faceoffsWonPercent" })?.displayValue {
                 return directPercent
@@ -71,21 +69,21 @@ struct ESPNGameCard: View {
                 return String(format: "%.1f", (wD / tD) * 100.0)
             }
         }
-        
+
         if name == "shotsTotal" {
             let shotKeys: Set<String> = ["shotstotal", "shots", "totalshots", "shotsongoal"]
             if let match = validStats.first(where: { shotKeys.contains($0.name.lowercased()) })?.displayValue {
                 return match
             }
         }
-        
+
         return validStats.first(where: { $0.name == name || $0.name.lowercased() == name.lowercased() })?.displayValue ?? "-"
     }
-    
+
     var body: some View {
         let activeAway = liveGameData.awayTeam
         let activeHome = liveGameData.homeTeam
-        
+
         VStack(spacing: 0) {
             Button(action: toggleClick) {
                 VStack(spacing: 12) {
@@ -108,12 +106,12 @@ struct ESPNGameCard: View {
                             }
                         }.padding(.horizontal, 4)
                     }
-                    
+
                     HStack(spacing: 0) {
                         if let away = activeAway {
                             HStack(spacing: 8) {
                                 TeamLogoView(logoURLString: away.team.logo, teamAbbreviation: away.team.threeLetterAbbreviation, size: 28)
-                                
+
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(away.team.threeLetterAbbreviation).font(.system(size: 20, weight: .black, design: .monospaced)).lineLimit(1).fixedSize(horizontal: true, vertical: false)
                                     Text(away.team.safeDisplayName).font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundColor(.secondary).lineLimit(1).minimumScaleFactor(0.75).truncationMode(.tail)
@@ -131,7 +129,7 @@ struct ESPNGameCard: View {
                                 }
                             }.frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        
+
                         Text({
                             if liveGameData.status.type.state == "in" {
                                 let period = liveGameData.status.period ?? 1
@@ -144,7 +142,7 @@ struct ESPNGameCard: View {
                             }
                         }())
                         .font(.system(size: 10, weight: .black, design: .monospaced)).padding(.horizontal, 6).padding(.vertical, 4).background(liveGameData.abstractState == "Live" ? Color.red : Color.primary.opacity(0.12)).foregroundColor(liveGameData.abstractState == "Live" ? .white : .primary.opacity(0.8)).cornerRadius(4).frame(width: 85, alignment: .center)
-                        
+
                         if let home = activeHome {
                             HStack(spacing: 0) {
                                 HStack(spacing: 14) {
@@ -158,25 +156,25 @@ struct ESPNGameCard: View {
                                 if liveGameData.abstractState == "Live" && liveGameData.powerPlayTeamID == home.id {
                                     Text("PP").font(.system(size: 9, weight: .black, design: .monospaced)).padding(.horizontal, 4).padding(.vertical, 2).background(Color.amber).foregroundColor(.black).cornerRadius(3).padding(.trailing, 4)
                                 }
-                                
+
                                 VStack(alignment: .trailing, spacing: 1) {
                                     Text(home.team.threeLetterAbbreviation).font(.system(size: 20, weight: .black, design: .monospaced)).multilineTextAlignment(.trailing).lineLimit(1).fixedSize(horizontal: true, vertical: false)
                                     Text(home.team.safeDisplayName).font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundColor(.secondary).multilineTextAlignment(.trailing).lineLimit(1).minimumScaleFactor(0.75).truncationMode(.tail)
                                 }
                                 .frame(maxWidth: 92, alignment: .trailing)
                                 .padding(.trailing, 8)
-                                
+
                                 TeamLogoView(logoURLString: home.team.logo, teamAbbreviation: home.team.threeLetterAbbreviation, size: 28)
                             }.frame(maxWidth: .infinity, alignment: .trailing)
                         }
                     }
-                    
+
                     HStack {
                         Spacer()
                         Text(getConvertedTime(isoString: liveGameData.date, detailText: liveGameData.status.type.detail)).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundColor(liveGameData.abstractState == "Live" ? .red : .secondary)
                         Spacer()
                     }
-                    
+
                     if liveGameData.abstractState == "Live", let strength = fetcher.resolvedStrength(for: liveGameData),
                        let badge = strength.badgeText(awayAbbr: activeAway?.team.threeLetterAbbreviation ?? "AWY", homeAbbr: activeHome?.team.threeLetterAbbreviation ?? "HOM") {
                         Text(badge.uppercased())
@@ -184,7 +182,7 @@ struct ESPNGameCard: View {
                             .padding(.horizontal, 8).padding(.vertical, 3)
                             .background(Capsule().fill(Color.amber)).foregroundColor(.black)
                     }
-                    
+
                     if let venueText = liveGameData.venueDisplayText {
                         HStack {
                             Spacer()
@@ -195,7 +193,7 @@ struct ESPNGameCard: View {
                     }
                 }.padding(.vertical, 14).padding(.horizontal, 16).background(Color.primary.opacity(isOpen ? 0.06 : 0.02))
             }.buttonStyle(.plain)
-            
+
             if isOpen {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(spacing: 12) {
@@ -224,16 +222,16 @@ struct ESPNGameCard: View {
                             .foregroundColor(.blue)
                         }.buttonStyle(.plain)
                     }.padding(.horizontal, 18).padding(.top, 4)
-                    
+
                     Color.white.opacity(0.12).frame(height: 1).padding(.horizontal, 18)
-                    
+
                     if liveGameData.abstractState == "Live" || liveGameData.abstractState == "Final" {
                         GameStatBarsView(game: liveGameData, fetcher: fetcher)
                             .padding(.horizontal, 18)
 
                         Color.white.opacity(0.12).frame(height: 1).padding(.horizontal, 18)
                     }
-                    
+
                     if liveGameData.abstractState == "Preview", let previewAway = activeAway, let previewHome = activeHome {
                         WinProbabilityBarView(game: liveGameData, fetcher: fetcher)
                             .padding(.horizontal, 18)
@@ -253,21 +251,21 @@ struct ESPNGameCard: View {
                             )
                         }
                     }.padding(.horizontal, 18)
-                    
+
                     if liveGameData.abstractState == "Live" {
                         Color.white.opacity(0.12).frame(height: 1).padding(.horizontal, 18)
                         WinProbabilityBarView(game: liveGameData, fetcher: fetcher)
                             .padding(.horizontal, 18)
                     }
-                    
+
                     if let odds = fetcher.winProbabilitySummaries[liveGameData.id], !odds.isEmpty {
                         Color.white.opacity(0.12).frame(height: 1).padding(.horizontal, 18)
                         InteractiveWinProbabilityChart(homeWinOdds: odds)
                             .padding(.horizontal, 18)
                     }
-                    
+
                     Color.white.opacity(0.12).frame(height: 1).padding(.horizontal, 18)
-                    
+
                     if liveGameData.abstractState != "Final" && detailTab == .postGame {
                         Color.clear.onAppear { detailTab = .goals }.frame(height: 0)
                     }
@@ -279,7 +277,7 @@ struct ESPNGameCard: View {
                     .pickerStyle(.segmented)
                     .labelsHidden()
                     .padding(.horizontal, 18)
-                    
+
                     if detailTab == .postGame, liveGameData.abstractState == "Final",
                        let away = activeAway, let home = activeHome {
                         PostGameSummary(
@@ -305,7 +303,7 @@ struct ESPNGameCard: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 if let plays = fetcher.scoringSummaries[liveGameData.id], !plays.isEmpty {
                                     ForEach(plays) { play in
-                
+
                                         AdaptivePlayRow(
                                             play: play,
                                             awayAbbr: activeAway?.team.threeLetterAbbreviation ?? "AWY",
@@ -350,7 +348,7 @@ struct ESPNGameCard: View {
             }
         }
     }
-    
+
     func getConvertedTime(isoString: String, detailText: String) -> String {
         let actualString = detailText.isEmpty ? "00:00" : detailText
         guard let parsedDate = liveGameData.systemCalendarDate else { return actualString }

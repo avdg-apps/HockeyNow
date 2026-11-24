@@ -1,13 +1,12 @@
 import SwiftUI
 
-// MARK: - Overlay
 struct FloatingOverlayCardView: View {
     let gameID: String
     @ObservedObject var fetcher: ESPNNHLFetcher
     let closeAction: () -> Void
-    
+
     private var liveGame: ESPNEvent? { fetcher.rawFetchedGames.first(where: { $0.id == gameID }) }
-    
+
     var body: some View {
         if let current = liveGame, let away = current.awayTeam, let home = current.homeTeam {
             ZStack(alignment: .topTrailing) {
@@ -27,9 +26,9 @@ struct FloatingOverlayCardView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    
+
                     Divider().background(Color.primary.opacity(0.2))
-                    
+
                     VStack(spacing: 2) {
                         Text({
                             if current.status.type.state == "in" {
@@ -39,7 +38,7 @@ struct FloatingOverlayCardView: View {
                         }())
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundColor(current.abstractState == "Live" ? .red : .primary)
-                        
+
                         if current.abstractState == "Live" {
                             Text("P\(current.status.period ?? 1)")
                                 .font(.system(size: 10, weight: .black, design: .monospaced))
@@ -51,7 +50,7 @@ struct FloatingOverlayCardView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .foregroundColor(.primary)
-                
+
                 Button(action: closeAction) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 11))

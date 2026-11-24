@@ -1,10 +1,6 @@
 import Foundation
 import Combine
 
-// MARK: - Keeping settings across updates
-// Settings, favourites, fantasy pins, pick'em picks and alert profiles all live in UserDefaults, which survives a normal
-// app update. This adds a second copy in Application Support so they also come back if the defaults store is ever empty
-// (a build signed differently, a changed bundle id, a reset). Old data is only ever filled in, never overwritten.
 @MainActor
 enum SettingsBackup {
     private static let markerKey = "settings_store_initialised"
@@ -23,7 +19,6 @@ enum SettingsBackup {
         }
     }
 
-    // Call first thing at launch, before anything reads a setting. Restores only into a store that has never been set up.
     static func restoreIfNeeded() {
         let defaults = UserDefaults.standard
         defer { defaults.set(true, forKey: markerKey) }

@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Shot map and expected goals for one game
 struct ShotMapView: View {
     let game: ESPNEvent
     @State private var data: ShotMapData?
@@ -53,7 +52,6 @@ struct ShotMapView: View {
         .frame(maxWidth: .infinity, alignment: home ? .trailing : .leading)
     }
 
-    // The home team attacks the right-hand net, the visitors the left-hand one.
     private func rink(_ data: ShotMapData) -> some View {
         let awayColor = getGameTeamColor(abbreviation: awayAbbr, isHome: false, opponent: homeAbbr)
         let homeColor = getGameTeamColor(abbreviation: homeAbbr, isHome: true, opponent: awayAbbr)
@@ -76,7 +74,6 @@ struct ShotMapView: View {
             }
             _ = line
 
-            // Shots: the home team's are drawn as shot toward the right net, the away team's toward the left net.
             for shot in data.shots {
                 let px = shot.isHome ? shot.x : -shot.x, py = shot.isHome ? shot.y : -shot.y
                 let center = point(px, py)

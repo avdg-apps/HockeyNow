@@ -2,7 +2,6 @@ import Foundation
 import Combine
 import Network
 
-// Tells the UI when the Mac is offline, so it can say that saved games are being shown.
 @MainActor
 final class NetworkMonitor: ObservableObject {
     @Published private(set) var isOnline = true

@@ -1,9 +1,6 @@
 import Foundation
 import Combine
 
-// MARK: - Rookie list
-// ESPN's boxscores don't say who is a rookie, but each team's roster lists a player's years of experience.
-// The rookie IDs are looked up once a day and saved to disk.
 @MainActor
 final class RookieDirectory: ObservableObject {
     @Published private(set) var rookieIDs = Set<String>()
@@ -45,7 +42,6 @@ final class RookieDirectory: ObservableObject {
         if !found.isEmpty { FinalGameStore.save(Array(found), kind: "rookies", id: dayKey) }
     }
 
-    // nil means the roster could not be read at all; an empty array means it was read but had no rookies.
     nonisolated private static func fetchRookies(teamID: String) async -> [String]? {
         guard let url = URL(string: "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/\(teamID)/roster") else { return nil }
         do {
@@ -66,7 +62,6 @@ final class RookieDirectory: ObservableObject {
     }
 }
 
-// ESPN groups the roster by position ("items"), or lists players flat; both shapes are handled.
 private struct RosterResponse: Decodable { let athletes: [RosterEntry]? }
 
 private struct RosterEntry: Decodable {

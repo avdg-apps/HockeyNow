@@ -1,13 +1,10 @@
 import SwiftUI
 
-// MARK: - Which list a game card shows under its timeline
 enum GameDetailTab: String, CaseIterable, Identifiable {
     case goals = "Goals", playByPlay = "Play-by-play", shots = "Shots", lines = "Lines", postGame = "Post-game"
     var id: String { rawValue }
 }
 
-// MARK: - Play-by-play
-// Every play ESPN publishes for the game, newest first. Scoring plays stand out.
 struct PlayByPlayView: View {
     let game: ESPNEvent
     @ObservedObject var fetcher: ESPNNHLFetcher
@@ -58,8 +55,6 @@ struct PlayByPlayView: View {
     }
 }
 
-// MARK: - Lines
-// The real lines once a game is under way; before that, the lineup from the team's last game.
 struct GameLinesView: View {
     let game: ESPNEvent
     @ObservedObject var fetcher: ESPNNHLFetcher

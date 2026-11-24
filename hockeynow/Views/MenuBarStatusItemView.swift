@@ -1,10 +1,9 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Menu Bar
 struct MenuBarStatusItemView: View {
     @ObservedObject var fetchedEngine: ESPNNHLFetcher
-    
+
     var body: some View {
         HStack(spacing: 0) {
             HStack(spacing: 5) {
@@ -24,7 +23,6 @@ struct MenuBarStatusItemView: View {
     }
 }
 
-// Lets clicks fall through to the status-bar button underneath.
 final class PassthroughHostingView<Content: View>: NSHostingView<Content> {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }

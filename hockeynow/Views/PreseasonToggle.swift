@@ -1,6 +1,5 @@
 import SwiftUI
 
-// Switches standings, player stats and team stats to show preseason games only. Off = regular season.
 struct PreseasonToggle: View {
     @ObservedObject var fetcher: ESPNNHLFetcher
 

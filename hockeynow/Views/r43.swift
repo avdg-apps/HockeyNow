@@ -1,12 +1,11 @@
 import SwiftUI
 import Combine
 
-// MARK: - Loading Screen
 struct EllipsisLoadingView: View {
     @State private var activeDotIndex = 0
     private let loadingMessages = ["Sharpening the skates…", "Cutting the ice…", "Taping the sticks…", "Warming up the goalies…"]
     private let timer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Spacer()

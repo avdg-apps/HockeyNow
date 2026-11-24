@@ -1,7 +1,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Full-screen-safe popover window
 private struct FullScreenSafeWindowConfigurator: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView(frame: .zero)
@@ -19,22 +18,21 @@ private struct FullScreenSafeWindowConfigurator: NSViewRepresentable {
     }
 }
 
-// MARK: - Enlarged Calendar
 struct ScrollWheelCatcher: NSViewRepresentable {
     let onSwipe: (_ leftward: Bool) -> Void
-    
+
     func makeNSView(context: Context) -> CatcherView {
         let view = CatcherView()
         view.onSwipe = onSwipe
         return view
     }
     func updateNSView(_ nsView: CatcherView, context: Context) { nsView.onSwipe = onSwipe }
-    
+
     class CatcherView: NSView {
         var onSwipe: ((_ leftward: Bool) -> Void)?
         private var accumulatedDeltaX: CGFloat = 0
         private var hasTriggeredThisGesture = false
-        
+
         override func scrollWheel(with event: NSEvent) {
             if event.phase == .began || (event.phase.isEmpty && event.momentumPhase.isEmpty) {
                 accumulatedDeltaX = 0; hasTriggeredThisGesture = false
@@ -42,7 +40,7 @@ struct ScrollWheelCatcher: NSViewRepresentable {
             accumulatedDeltaX += event.scrollingDeltaX
             if !hasTriggeredThisGesture, abs(accumulatedDeltaX) > 40 {
                 hasTriggeredThisGesture = true
-                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)   // trackpad tick as the month flips
+                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
                 onSwipe?(accumulatedDeltaX > 0)
             }
             if event.phase == .ended || event.phase == .cancelled {
@@ -55,19 +53,19 @@ struct ScrollWheelCatcher: NSViewRepresentable {
 struct EnlargedCalendarPicker: View {
     @Binding var selection: Date
     @State private var displayedMonth: Date
-    
+
     init(selection: Binding<Date>) {
         self._selection = selection
         self._displayedMonth = State(initialValue: selection.wrappedValue)
     }
-    
+
     private var calendar: Calendar { Calendar.current }
-    
+
     private var monthTitle: String {
         let f = DateFormatter(); f.dateFormat = "MMMM yyyy"
         return f.string(from: displayedMonth)
     }
-    
+
     private var daysInGrid: [Date?] {
         guard let monthInterval = calendar.dateInterval(of: .month, for: displayedMonth) else { return [] }
         let firstWeekday = calendar.component(.weekday, from: monthInterval.start)
@@ -80,7 +78,7 @@ struct EnlargedCalendarPicker: View {
         }
         return days
     }
-    
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -90,23 +88,17 @@ struct EnlargedCalendarPicker: View {
                 Spacer()
                 Button(action: { shiftMonth(1) }) { Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold)) }.buttonStyle(.plain)
             }
-            
+
             Button(action: jumpToToday) {
                 Text("Today").font(.system(size: 9, weight: .bold, design: .monospaced)).foregroundColor(.blue)
             }.buttonStyle(.plain)
-            
-            // The day grid below uses `GridItem(.fixed(24), spacing: 2)` for its 7 columns, so each
-            // column's true width (with its trailing gap) is 26pt. This header used `spacing: 0`,
-            // which made it 12pt narrower overall than the grid and left it centered independently -
-            // so the Sun/Mon/Tue... labels drifted out of alignment with the day-number columns
-            // beneath them. Matching the spacing here keeps both rows the same total width so the
-            // weekday letters sit directly above their corresponding dates.
+
             HStack(spacing: 2) {
                 ForEach(Array(shortWeekdaySymbols.enumerated()), id: \.offset) { _, symbol in
                     Text(symbol).font(.system(size: 9, weight: .bold, design: .monospaced)).foregroundColor(.secondary).frame(width: 24)
                 }
             }
-            
+
             LazyVGrid(columns: Array(repeating: GridItem(.fixed(24), spacing: 2), count: 7), spacing: 3) {
                 ForEach(Array(daysInGrid.enumerated()), id: \.offset) { _, date in
                     if let date {
@@ -136,19 +128,19 @@ struct EnlargedCalendarPicker: View {
         }))
         .background(FullScreenSafeWindowConfigurator())
     }
-    
+
     private var shortWeekdaySymbols: [String] {
         let symbols = calendar.veryShortWeekdaySymbols
         let offset = calendar.firstWeekday - 1
         return Array(symbols[offset...] + symbols[..<offset])
     }
-    
+
     private func shiftMonth(_ delta: Int) {
         if let newMonth = calendar.date(byAdding: .month, value: delta, to: displayedMonth) {
             displayedMonth = newMonth
         }
     }
-    
+
     private func jumpToToday() {
         let today = Date()
         withAnimation(.easeOut(duration: 0.15)) { displayedMonth = today }

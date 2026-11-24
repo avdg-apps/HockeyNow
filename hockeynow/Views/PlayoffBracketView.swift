@@ -1,8 +1,5 @@
 import SwiftUI
 
-// MARK: - Playoff bracket
-// Past seasons show the real bracket: each series with both teams' wins, the games played and the winner.
-// The current season (and any later one) shows TBD in every slot until its playoff games exist.
 struct PlayoffBracketView: View {
     @ObservedObject var fetcher: ESPNNHLFetcher
     @AppStorage("favorite_team_abbreviation") private var favouriteTeamAbbreviation = ""
@@ -11,7 +8,7 @@ struct PlayoffBracketView: View {
 
     private let cardWidth: CGFloat = 176
     private let cardHeight: CGFloat = 62
-    private let slotHeight: CGFloat = 74      // one first-round slot; later rounds double it so cards sit between their feeders
+    private let slotHeight: CGFloat = 74
 
     init(fetcher: ESPNNHLFetcher) {
         self.fetcher = fetcher
@@ -27,7 +24,6 @@ struct PlayoffBracketView: View {
     private var seasonName: String { "\(selectedSeasonStartYear)/\(String(selectedSeasonStartYear + 1).suffix(2))" }
     private var isFutureSeason: Bool { selectedSeasonStartYear > Self.currentSeasonStartYear }
 
-    // Only games from the selected season, so a season that is still loading can never show another season's bracket.
     private var bracket: PlayoffBracket {
         guard !isFutureSeason else { return .empty }
         var calendar = Calendar(identifier: .gregorian)
@@ -53,7 +49,6 @@ struct PlayoffBracketView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                // Scrolls left/right through the rounds, and up/down between the two conferences.
                 ScrollView([.horizontal, .vertical], showsIndicators: true) {
                     HStack(alignment: .top, spacing: 18) {
                         roundColumn(title: "ROUND 1", rounds: 1, east: bracket.eastern.roundOne, west: bracket.western.roundOne)
@@ -69,20 +64,17 @@ struct PlayoffBracketView: View {
         .padding(.top, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color.primary.opacity(0.03))
-        // Past and current seasons are loaded; a future season has nothing to load and stays TBD.
         .task(id: selectedSeasonStartYear) {
             guard !isFutureSeason else { return }
             await fetcher.loadSeason(startingIn: selectedSeasonStartYear)
         }
     }
 
-    // MARK: Header
     private func header(started: Bool) -> some View {
         HStack {
             Text("PLAYOFFS").font(.system(size: 11, weight: .black, design: .monospaced)).foregroundColor(.secondary)
             Spacer()
             Menu {
-                // One season past the current one, so a future bracket can be viewed (all TBD).
                 ForEach((2016...(Self.currentSeasonStartYear + 1)).reversed(), id: \.self) { year in
                     Button { selectedSeasonStartYear = year } label: {
                         Text("\(year)/\(String(year + 1).suffix(2))")
@@ -113,9 +105,6 @@ struct PlayoffBracketView: View {
         .padding(.bottom, started ? 0 : 14)
     }
 
-    // MARK: Columns
-    // Each conference block is four first-round slots tall; a later round's slot is twice as tall as the one before,
-    // which centres each card between the two series that feed it.
     private func roundColumn(title: String, rounds: Int, east: [PlayoffSeries?], west: [PlayoffSeries?]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.system(size: 9, weight: .black, design: .monospaced)).foregroundColor(.amber)
@@ -154,13 +143,11 @@ struct PlayoffBracketView: View {
                         .frame(width: cardWidth)
                 }
             }
-            // Vertically centred against the two conference blocks.
             .frame(height: slotHeight * 8 + 30, alignment: .center)
         }
         .frame(width: cardWidth, alignment: .leading)
     }
 
-    // MARK: Series card
     @ViewBuilder
     private func seriesCard(_ series: PlayoffSeries?) -> some View {
         VStack(spacing: 0) {
@@ -195,7 +182,6 @@ struct PlayoffBracketView: View {
         .help(series == nil ? "" : "Click for every game in this series")
     }
 
-    // MARK: Series detail
     private func seriesDetail(_ series: PlayoffSeries) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("\(series.top.name) vs \(series.bottom.name)")

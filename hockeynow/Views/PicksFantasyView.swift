@@ -1,7 +1,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Picks, fantasy and watch party in one tab
 struct PicksFantasyView: View {
     @ObservedObject var fetcher: ESPNNHLFetcher
     @ObservedObject private var store = PicksFantasyStore.shared
@@ -35,7 +34,6 @@ struct PicksFantasyView: View {
         .frame(height: 480)
     }
 
-    // MARK: Games the app knows about
     private var allGames: [ESPNEvent] {
         var seen = Set<String>()
         return (fetcher.rawFetchedGames + fetcher.seasonGames).filter { seen.insert($0.id).inserted }
@@ -52,7 +50,6 @@ struct PicksFantasyView: View {
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
-    // MARK: Watch party
     private var upcomingForFollowed: [ESPNEvent] {
         let followed = hockeyNowFavouriteTeams()
         let now = Date().addingTimeInterval(-3 * 3600)
@@ -143,7 +140,6 @@ struct PicksFantasyView: View {
         if (try? ics.write(to: url, atomically: true, encoding: .utf8)) != nil { NSWorkspace.shared.open(url) }
     }
 
-    // MARK: Pick'em
     private var todaysSlate: [ESPNEvent] { fetcher.localFilteredGames }
 
     @ViewBuilder private var pickem: some View {
@@ -209,14 +205,12 @@ struct PicksFantasyView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: Fantasy
     private var searchResults: [SkaterSeasonLine] {
         let query = search.trimmingCharacters(in: .whitespaces).lowercased()
         guard query.count >= 2 else { return [] }
         return Array(fetcher.skaterLeaders.filter { $0.displayName.lowercased().contains(query) && !store.isPinned($0.id) }.prefix(6))
     }
 
-    // The game a player's team is playing today (live first, then finished, then upcoming).
     private func gameToday(for team: String) -> ESPNEvent? {
         let calendar = Calendar.current
         let todays = allGames.filter { game in
@@ -282,7 +276,6 @@ struct PicksFantasyView: View {
                 }.controlSize(.small)
             }
         }
-        // Keep today's box scores current while this tab is open.
         Color.clear.frame(height: 0).task(id: store.pinned.map(\.id)) {
             while !Task.isCancelled {
                 for player in store.pinned {

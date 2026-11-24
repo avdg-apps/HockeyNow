@@ -1,11 +1,10 @@
 import SwiftUI
 
-// MARK: - Engine
 struct TeamLogoView: View {
     let logoURLString: String?
     let teamAbbreviation: String
     var size: CGFloat = 24
-    
+
     private var resolvedLogoURL: URL? {
         let suppliedURL = logoURLString.flatMap(URL.init(string:))
         if suppliedURL != nil { return suppliedURL }
@@ -31,7 +30,7 @@ struct TeamLogoView: View {
             fallbackTextCircle
         }
     }
-    
+
     private var fallbackTextCircle: some View {
         ZStack {
             Circle()
@@ -43,4 +42,3 @@ struct TeamLogoView: View {
         .frame(width: size, height: size)
     }
 }
-

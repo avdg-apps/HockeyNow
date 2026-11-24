@@ -2,7 +2,6 @@ import SwiftUI
 import AppKit
 import Combine
 
-// MARK: - Notch Suite
 final class NotchState: ObservableObject {
     @Published var isExpanded = false
     @Published var banner: LiveActivityEvent?
@@ -18,15 +17,13 @@ struct StrengthTag: Identifiable {
 struct InteractiveNotchRootView: View {
     let away: ESPNEvent.ESPNCompetitor; let home: ESPNEvent.ESPNCompetitor; let game: ESPNEvent
     @ObservedObject var fetcher: ESPNNHLFetcher
-    let notchWidth: CGFloat          // expanded width
+    let notchWidth: CGFloat
     let collapsedWidth: CGFloat
-    let hardwareNotchWidth: CGFloat   // the physical cut-out: header text is kept clear of it
+    let hardwareNotchWidth: CGFloat
     let collapsedHeight: CGFloat
     let expandedHeight: CGFloat
     @ObservedObject var state: NotchState
-    // The heavy body is only built while the notch is open (or still closing), so the collapsed pill costs almost nothing.
     @State private var bodyMounted = false
-    // Contents fade in a beat after the shape starts growing, so nothing shows before the notch has opened around it.
     @State private var contentVisible = false
     private var isExpanded: Bool { state.isExpanded }
     private var liveGameData: ESPNEvent {
@@ -34,23 +31,19 @@ struct InteractiveNotchRootView: View {
             ?? (fetcher.notchedGameInstance?.id == game.id ? fetcher.notchedGameInstance : nil) ?? game
         return fetcher.applyCachedStats(to: newest)
     }
-    
+
     var body: some View {
         let activeAway = liveGameData.awayTeam ?? away
         let activeHome = liveGameData.homeTeam ?? home
-        // A live alert on its own (small style) drops only a thin strip under the notch, not the whole panel.
         let isPeeking = !isExpanded && state.banner != nil
         let shapeWidth = isExpanded ? notchWidth : (isPeeking ? min(notchWidth, max(collapsedWidth, 400)) : collapsedWidth)
         let shapeHeight = isExpanded ? expandedHeight : (isPeeking ? collapsedHeight + 38 : collapsedHeight)
         let radius: CGFloat = isExpanded ? 26 : (isPeeking ? 18 : 10)
-        
-        // One spring drives the black shape, the header spacing and the reveal of the body, so the text grows out
-        // of the notch together with it instead of fading in afterwards.
+
         return ZStack(alignment: .top) {
             NotchCornerShape(radius: radius).fill(Color.black)
                 .frame(width: shapeWidth, height: shapeHeight)
-            
-            // The body is always laid out at full size and uncovered by the growing shape.
+
             if isExpanded || bodyMounted {
                 VStack(spacing: 0) {
                     Color.clear.frame(height: collapsedHeight)
@@ -66,10 +59,10 @@ struct InteractiveNotchRootView: View {
                 .allowsHitTesting(isExpanded)
                 .transition(.identity)
             }
-            
+
             header(away: activeAway, home: activeHome)
                 .frame(width: shapeWidth, height: collapsedHeight)
-            
+
             if let banner = state.banner {
                 liveBanner(banner)
                     .padding(.top, collapsedHeight + 4)
@@ -98,8 +91,7 @@ struct InteractiveNotchRootView: View {
             }
         }
     }
-    
-    // MARK: Live-activity banner (goal, penalty, period end), shown for a few seconds when the notch pops out by itself
+
     private func liveBanner(_ event: LiveActivityEvent) -> some View {
         HStack(spacing: 8) {
             Image(systemName: event.symbol).font(.system(size: 11, weight: .black)).foregroundColor(.black)
@@ -111,8 +103,7 @@ struct InteractiveNotchRootView: View {
         .frame(maxWidth: notchWidth - 60)
         .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
     }
-    
-    // MARK: Header: team, score and power-play tag on each side of the hardware notch
+
     private func header(away: ESPNEvent.ESPNCompetitor, home: ESPNEvent.ESPNCompetitor) -> some View {
         let isLive = liveGameData.abstractState == "Live"
         let showsSOG = liveGameData.abstractState != "Preview"
@@ -127,8 +118,6 @@ struct InteractiveNotchRootView: View {
             } else if liveGameData.powerPlayTeamID == teamID {
                 result.append(StrengthTag(text: "PP", fill: .amber, ink: .black))
             }
-            // The collapsed pill only has room for the most important tag.
-            // The collapsed pill has no room beside the hardware notch for tags; the abbreviation changes colour instead.
             return isExpanded ? result : []
         }
         let awayTags = tags(for: .away, teamID: away.id), homeTags = tags(for: .home, teamID: home.id)
@@ -148,7 +137,6 @@ struct InteractiveNotchRootView: View {
             }
             .padding(.leading, sidePadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            // Each half stays outside the physical notch (with a little margin), however wide the pill is.
             Color.clear.frame(width: hardwareNotchWidth + 8, height: 1)
             HStack(alignment: .center, spacing: isExpanded ? 8 : 6) {
                 ForEach(homeTags) { tag in strengthTag(tag.text, fill: tag.fill, ink: tag.ink) }
@@ -164,24 +152,22 @@ struct InteractiveNotchRootView: View {
         }
         .contentShape(Rectangle())
     }
-    
+
     private func strengthTag(_ text: String, fill: Color, ink: Color) -> some View {
         Text(text).font(.system(size: 8, weight: .black, design: .monospaced)).padding(.horizontal, 3).padding(.vertical, 1)
             .background(fill).foregroundColor(ink).cornerRadius(2)
     }
 
-    // A fixed-width slot that grows from nothing with the notch, so the labels never squeeze the score while it is still small.
     private func sogSlot(for team: ESPNEvent.ESPNCompetitor, alignment: Alignment, show: Bool) -> some View {
         sogLabel(for: team)
             .frame(width: show ? 42 : 0, alignment: alignment)
             .clipped()
             .opacity(show && contentVisible ? 1 : 0)
-            .padding(alignment == .leading ? .trailing : .leading, show ? 0 : -6)    // cancels the stack spacing while hidden
+            .padding(alignment == .leading ? .trailing : .leading, show ? 0 : -6)
     }
 
     private func sogLabel(for team: ESPNEvent.ESPNCompetitor) -> some View {
         let shotKeys: Set<String> = ["shotstotal", "shots", "totalshots", "shotsongoal"]
-        // `statistics` is often an empty array rather than nil, so fall back to the box-score cache in that case too.
         func shots(in stats: [ESPNEvent.ESPNCompetitor.ESPNStatistic]?) -> String? {
             guard let stats, !stats.isEmpty else { return nil }
             return stats.first(where: { shotKeys.contains($0.name.lowercased()) })?.displayValue
@@ -193,8 +179,7 @@ struct InteractiveNotchRootView: View {
             .foregroundColor(.white.opacity(0.72))
             .lineLimit(1).fixedSize(horizontal: true, vertical: false)
     }
-    
-    // MARK: Expanded body
+
     @ViewBuilder
     private func expandedBody(away: ESPNEvent.ESPNCompetitor, home: ESPNEvent.ESPNCompetitor) -> some View {
         if liveGameData.abstractState == "Preview" {
@@ -203,8 +188,7 @@ struct InteractiveNotchRootView: View {
             gameBody(away: away, home: home)
         }
     }
-    
-    // Live and finished games: clock + strength, period timeline and goals on the left; win probability and stat bars on the right.
+
     private func gameBody(away: ESPNEvent.ESPNCompetitor, home: ESPNEvent.ESPNCompetitor) -> some View {
         let isLive = liveGameData.abstractState == "Live"
         let awayAbbr = away.team.threeLetterAbbreviation, homeAbbr = home.team.threeLetterAbbreviation
@@ -241,7 +225,7 @@ struct InteractiveNotchRootView: View {
                 .frame(maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            
+
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 10) {
                     if isLive { WinProbabilityBarView(game: liveGameData, fetcher: fetcher, compact: true, onDark: true) }
@@ -266,8 +250,7 @@ struct InteractiveNotchRootView: View {
         }
         .padding(.horizontal, 22).padding(.top, 4).padding(.bottom, 30)
     }
-    
-    // Upcoming games: puck-drop time, pre-game win chance, then the leaders slider filling the rest.
+
     private func previewBody(away: ESPNEvent.ESPNCompetitor, home: ESPNEvent.ESPNCompetitor) -> some View {
         VStack(spacing: 10) {
             statusRow(awayAbbr: away.team.threeLetterAbbreviation, homeAbbr: home.team.threeLetterAbbreviation)
@@ -278,8 +261,7 @@ struct InteractiveNotchRootView: View {
         }
         .padding(.horizontal, 22).padding(.top, 4).padding(.bottom, 28)
     }
-    
-    // Period + clock (or start time + countdown) and, when it applies, the exact on-ice strength: "5 on 4 · TOR PP".
+
     private func statusRow(awayAbbr: String, homeAbbr: String) -> some View {
         let isLive = liveGameData.abstractState == "Live"
         let badge = isLive ? fetcher.resolvedStrength(for: liveGameData)?.badgeText(awayAbbr: awayAbbr, homeAbbr: homeAbbr) : nil
@@ -303,7 +285,7 @@ struct InteractiveNotchRootView: View {
         .frame(maxWidth: .infinity)
         .animation(.smooth(duration: 0.3), value: badge)
     }
-    
+
     private func getCompactTimeLabel(for event: ESPNEvent) -> String {
         let modifier = fetcher.detectLiveGoalModifiers(for: event.id)
         if event.abstractState == "Live" {
@@ -325,7 +307,6 @@ struct InteractiveNotchRootView: View {
     }
 }
 
-// MARK: - After the final horn: three stars and each team's next game
 struct PostGameSummary: View {
     let stars: [ThreeStar]
     let nextGames: [(abbr: String, info: NextGameInfo?)]
@@ -415,7 +396,6 @@ struct PostGameSummary: View {
     }
 }
 
-// MARK: - Latest plays (fills the right column under the stat bars)
 struct LatestPlaysFeed: View {
     let plays: [ESPNPlay]
     let awayID: String
@@ -423,17 +403,16 @@ struct LatestPlaysFeed: View {
     let awayColor: Color
     let homeColor: Color
     let title: String
-    
-    // ESPN lists plays oldest first, so the newest five are the tail, shown newest on top.
+
     private var latest: [ESPNPlay] {
         Array(plays.filter { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty }.suffix(5).reversed())
     }
-    
+
     private func dotColor(for play: ESPNPlay) -> Color {
         guard let id = play.team?.id else { return .white.opacity(0.25) }
         return id == awayID ? awayColor : (id == homeID ? homeColor : .white.opacity(0.25))
     }
-    
+
     var body: some View {
         let items = latest
         if !items.isEmpty {
@@ -461,12 +440,10 @@ struct LatestPlaysFeed: View {
     }
 }
 
-// MARK: - Extension Helper Suite
 extension View {
     func whiteOpacityFallback() -> some View { self.foregroundColor(.white.opacity(0.4)) }
 }
 
-// MARK: - Notch Designer
 struct NotchCornerShape: Shape {
     var radius: CGFloat
 
@@ -476,12 +453,9 @@ struct NotchCornerShape: Shape {
     }
 
     func path(in rect: CGRect) -> Path {
-        // The top edge sits flush with the top of the screen; only the bottom corners are rounded.
-        // The corners use an extended Bezier ("continuous corner") so they blend into the straight
-        // edges the way the hardware notch does, instead of a plain circular arc.
         let r = max(0, min(radius, rect.width / 2, rect.height))
-        let e = min(r * 1.25, rect.width / 2, rect.height)   // how far the curve reaches along each edge
-        let k = e * 0.28                                     // control-point inset; smaller = squarer
+        let e = min(r * 1.25, rect.width / 2, rect.height)
+        let k = e * 0.28
 
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.minY))
